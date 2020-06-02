@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "fx-profiler-audio-cb",
+  "description": "Compute metrics and display visual representation of isosynchronous events",
+  "version": "0.0.2",
+  "icons": {
+    "48": "icons/icon.png",
+    "96": "icons/icon2x.png"
+  },
+  "background": {
+    "scripts": ["plotly.js", "background_script.js"]
+  },
+
+  "browser_action": {
+    "default_icon": {
+      "48": "icons/icon.png",
+      "96": "icons/icon2x.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://profiler.firefox.com/*"],
+      "css": ["cb-load.css"]
+    }
+  ],
+  "permissions": [
+    "activeTab"
+  ]
+}

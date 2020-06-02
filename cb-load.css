@@ -1,0 +1,63 @@
+.cb-wrapper {
+  top: 2em;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+.cb-root {
+  border: 2px solid black;
+  background-color: #fff;
+  box-shadow: 0 22px 70px 4px rgba(0, 0, 0, 0.56);
+  height: 95%;
+  overflow: scroll;
+}
+.cb-root .cb-close:hover {
+  cursor: pointer;
+}
+.cb-root .cb-close {
+  background: #fff;
+  border: none;
+  text-align: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 100%;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 15px;
+  color: white;
+  font-weight: bold;
+  text-decoration: none
+}
+.cb-root .cb-plot {
+  width: 75%;
+}
+.cb-root table {
+  border-top: 2px solid gray;
+  border-bottom: 2px solid gray;
+  width: 40%;
+  border-collapse: collapse;
+}
+.cb-root .cb-metrics {
+  width: 40%;
+  padding-top: 3em;
+  padding-bottom: 3em;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+.cb-root .cb-metrics td:last-child {
+  text-align: right;
+}
+.cb-root p {
+  text-align: left;
+}
+
+.cb-title {
+text-align: center;
+}
