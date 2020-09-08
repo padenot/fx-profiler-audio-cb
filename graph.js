@@ -154,11 +154,11 @@ for (var i = 0; i < m.length; i++) {
       time_base = m[i].start;
     }
     cb_time[idx_cb_time++] = m[i].start - time_base;
-    budgets[idx_budgets++] = m[i].dur;
+    budgets[idx_budgets++] = m[i].end - m[i].start;
     continue;
   }
   if (m[i].name.indexOf("DataCallback") != -1) {
-    callbacks[idx_callbacks++] = m[i].dur;
+    callbacks[idx_callbacks++] = m[i].end - m[i].start;
     continue;
   }
 }
@@ -177,6 +177,7 @@ var results = {
   stddev: 0,
   variance: 0
 };
+
 
 var copy_load = load.slice(0);
 copy_load.sort((a, b) => a - b);
@@ -201,6 +202,7 @@ results.variance /= len;
 results.stddev = Math.sqrt(results.variance);
 results.load = load;
 results.time = cb_time;
+
 plot(results);
 
 console.log(results);

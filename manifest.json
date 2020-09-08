@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "fx-profiler-audio-cb",
   "description": "Compute metrics and display visual representation of isosynchronous events",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "icons": {
     "48": "icons/icon.png",
     "96": "icons/icon2x.png"
