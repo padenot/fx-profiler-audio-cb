@@ -7,6 +7,9 @@ function doit(e) {
     browser.tabs.executeScript({
       file: "/graph.js"
     });
+    browser.tabs.executeScript({
+      file: "/playback_markers.js"
+    });
   });
 }
 
