@@ -8,6 +8,9 @@ function doit(e) {
       file: "/graph.js"
     });
     browser.tabs.executeScript({
+      file: "/audio_budget.js"
+    });
+    browser.tabs.executeScript({
       file: "/playback_markers.js"
     });
   });
