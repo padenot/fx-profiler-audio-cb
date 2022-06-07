@@ -123,14 +123,17 @@ function plot(data) {
   title.innerText = "Real-time audio callback load statistical analysis";
   var metricsRoot = document.createElement("div");
   metricsRoot.className = "cb-metrics";
-  metricsRoot.innerHTML = `
-  <table>
-  <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
-  <tr><td> Median</td><td> ${data.median.toPrecision(4)}</td></tr>
-  <tr><td> Variance</td><td> ${data.variance.toPrecision(4)}</td></tr>
-  <tr><td> Standard deviation</td><td> ${data.stddev.toPrecision(4)}</td></tr>
-  </table>
-  `;
+  if (!Number.isNaN(data.mean) && !Number.isNaN(data.median) &&
+      !Number.isNaN(data.variance) && !Number.isNaN(data.stddev)) {
+    metricsRoot.innerHTML = `
+      <table>
+      <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
+      <tr><td> Median</td><td> ${data.median.toPrecision(4)}</td></tr>
+      <tr><td> Variance</td><td> ${data.variance.toPrecision(4)}</td></tr>
+      <tr><td> Standard deviation</td><td> ${data.stddev.toPrecision(4)}</td></tr>
+      </table>
+      `;
+  }
 
   root.appendChild(title);
   root.appendChild(metricsRoot);
