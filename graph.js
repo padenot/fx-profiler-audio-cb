@@ -1,3 +1,34 @@
+// Create basic Div to display information. The page can contain multiple plots
+// at the same time.
+function GetGraphicRootDivs() {
+  var rootWrapper = document.getElementById("cb-wrapper");
+  var root = document.getElementById("cb-root");
+  if (!rootWrapper || !root) {
+    function close_cb(e) {
+      document.querySelector(".cb-wrapper").remove();
+    }
+
+    rootWrapper = document.createElement("div");
+    rootWrapper.id = rootWrapper.className = "cb-wrapper";
+    rootWrapper.onclick = close_cb;
+
+    root = document.createElement("div");
+    root.id = root.className = "cb-root";
+    root.className = "cb-root";
+    rootWrapper.appendChild(root);
+    let close = document.createElement("button");
+    close.className = "cb-close";
+    close.innerText = "✖️";
+    root.appendChild(close);
+    close.onclick = close_cb;
+    document.body.appendChild(rootWrapper);
+  }
+  return {
+    rootWrapper,
+    root
+  };
+}
+
 // Data has the following shape:
 //
 // data: {
@@ -8,21 +39,8 @@
 //   stddev: stddev value
 // };
 function plot(data) {
-  function close_cb(e) {
-    document.querySelector(".cb-wrapper").remove();
-  }
+  const {rootWrapper, root} = GetGraphicRootDivs();
 
-  var rootWrapper = document.createElement("div");
-  rootWrapper.className = "cb-wrapper";
-  rootWrapper.onclick = close_cb;
-  var root = document.createElement("div");
-  root.className = "cb-root";
-  rootWrapper.appendChild(root);
-  var close = document.createElement("button");
-  close.className = "cb-close";
-  close.innerText = "✖️";
-  root.appendChild(close);
-  close.onclick = close_cb;
   var plotRoot = document.createElement("div");
   plotRoot.className = "cb-load cb-plot";
   var plotRootHist = document.createElement("div");
@@ -139,6 +157,4 @@ function plot(data) {
   root.appendChild(metricsRoot);
   root.appendChild(plotRoot);
   root.appendChild(plotRootHist);
-
-  document.body.appendChild(rootWrapper);
 }
