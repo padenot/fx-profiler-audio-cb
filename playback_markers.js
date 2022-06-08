@@ -51,7 +51,7 @@ function collectPlaybackMarkersDuration(targetedName) {
       result.mean = sum / sortedData.length;
 
       // Variance
-      for (var i = 0; i < len; i++) {
+      for (let value of sortedData) {
         result.variance += Math.pow(value - result.mean, 2);
       }
       result.variance /= sortedData.length;
