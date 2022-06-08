@@ -254,7 +254,13 @@ function plotPlaybackMarkers(dataSet) {
             };
             var layoutHist = {
               width: window.innerWidth * 0.75, // TODO: this is bad
-              title: data.markerKey
+              title: data.markerKey,
+              yaxis: {
+                title: 'Percentage',
+              },
+              xaxis: {
+                title: 'Time (Millisecond)',
+              },
             }
             Plotly.newPlot(plotRootHist, [trace], layoutHist);
         }
