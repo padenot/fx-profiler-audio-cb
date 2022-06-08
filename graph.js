@@ -218,7 +218,10 @@ function plotPlaybackMarkers(dataSet) {
 
     const selectedMarkerName = selectBox.options[selectBox.selectedIndex].text;
     Object.entries(dataSet).forEach(([key, dataSet]) => {
-      for (let data of dataSet) {
+      // sort keys so that related keys are close to each other (e.g. video with
+      // video, audio with audio, resolutions grouped, etc.)
+      var dataSetSorted = dataSet.sort((a, b) => a.markerKey > b.markerKey );
+      for (let data of dataSetSorted) {
         if (data.markerName != selectedMarkerName) {
           continue;
         }
