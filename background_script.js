@@ -1,18 +1,19 @@
 var browser = browser || chrome;
 
-function doit(e) {
-  browser.tabs.executeScript({
+async function doit(e) {
+  // Scripts which should be loaded first.
+  await browser.tabs.executeScript({
     file: "/plotly.js"
-  }).then(function() {
-    browser.tabs.executeScript({
-      file: "/graph.js"
-    });
-    browser.tabs.executeScript({
-      file: "/audio_budget.js"
-    });
-    browser.tabs.executeScript({
-      file: "/playback_markers.js"
-    });
+  });
+  await browser.tabs.executeScript({
+    file: "/graph.js"
+  });
+  // Scripts which don't have dependency.
+  browser.tabs.executeScript({
+    file: "/audio_budget.js"
+  });
+  browser.tabs.executeScript({
+    file: "/playback_markers.js"
   });
 }
 
