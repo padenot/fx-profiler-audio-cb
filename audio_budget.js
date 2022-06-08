@@ -61,6 +61,8 @@ results.stddev = Math.sqrt(results.variance);
 results.load = load;
 results.time = cb_time;
 
-plot(results);
+if (idx_budgets != 0) {
+  plot(results);
+}
 
 console.log(results);
