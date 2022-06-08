@@ -220,6 +220,10 @@ function plotPlaybackMarkers(dataSet) {
         metricsRoot.className = "cb-metrics";
         if (!Number.isNaN(data.mean) && !Number.isNaN(data.median) &&
             !Number.isNaN(data.variance) && !Number.isNaN(data.stddev)) {
+          // Some texts in the key would be incorrectly parse as an element, eg.
+          // "<h" so we add spaces to avoid that in order to show the complete
+          // key name correctly.
+          data.markerKey = data.markerKey.replace("<"," < ");
           metricsRoot.innerHTML = `
             <p>${data.markerName} : ${data.markerKey}</p>
             <table>

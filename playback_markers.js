@@ -6,6 +6,7 @@ function collectPlaybackMarkersDuration(targetedName) {
     if (marker.category != categoryMediaPlayback) {
       continue;
     }
+    console.log(marker);
     if (marker.name.indexOf(targetedName) == -1) {
       continue;
     }
