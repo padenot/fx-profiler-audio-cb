@@ -6,7 +6,6 @@ function collectPlaybackMarkersDuration(targetedName) {
     if (marker.category != categoryMediaPlayback) {
       continue;
     }
-    console.log(marker);
     if (marker.name.indexOf(targetedName) == -1) {
       continue;
     }
@@ -70,7 +69,6 @@ function collectPlaybackMarkersDuration(targetedName) {
   }
 
   if (shouldDisplayResult) {
-    console.log(results);
     plotPlaybackMarkers(results);
   }
 })();
