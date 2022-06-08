@@ -210,7 +210,7 @@ function plotPlaybackMarkers(dataSet) {
     event.stopPropagation();
   };
 
-  selectBox.onchange = function() {
+  function displayStatistic() {
     // Clear display for old markers first, then append new data.
     while (displayContent.firstChild) {
       displayContent.innerHTML = "";
@@ -270,6 +270,11 @@ function plotPlaybackMarkers(dataSet) {
       }
     });
   };
+  selectBox.onchange = displayStatistic;
 
-
+  // If we have any avaliable option than `None`, display the first one now.
+  if (selectBox.options.length > 1) {
+    selectBox.options[1].selected = true;
+    displayStatistic();
+  }
 }
