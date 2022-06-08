@@ -1,7 +1,33 @@
-function close_cb(e) {
-  document.querySelector(".cb-wrapper").remove();
-}
+// Create basic Div to display information. The page can contain multiple plots
+// at the same time.
+function GetGraphicRootDivs() {
+  var rootWrapper = document.getElementById("cb-wrapper");
+  var root = document.getElementById("cb-root");
+  if (!rootWrapper || !root) {
+    function close_cb(e) {
+      document.querySelector(".cb-wrapper").remove();
+    }
 
+    rootWrapper = document.createElement("div");
+    rootWrapper.id = rootWrapper.className = "cb-wrapper";
+    rootWrapper.onclick = close_cb;
+
+    root = document.createElement("div");
+    root.id = root.className = "cb-root";
+    root.className = "cb-root";
+    rootWrapper.appendChild(root);
+    let close = document.createElement("button");
+    close.className = "cb-close";
+    close.innerText = "✖️";
+    root.appendChild(close);
+    close.onclick = close_cb;
+    document.body.appendChild(rootWrapper);
+  }
+  return {
+    rootWrapper,
+    root
+  };
+}
 
 // Data has the following shape:
 //
@@ -13,17 +39,8 @@ function close_cb(e) {
 //   stddev: stddev value
 // };
 function plot(data) {
-  var rootWrapper = document.createElement("div");
-  rootWrapper.className = "cb-wrapper";
-  rootWrapper.onclick = close_cb;
-  var root = document.createElement("div");
-  root.className = "cb-root";
-  rootWrapper.appendChild(root);
-  var close = document.createElement("button");
-  close.className = "cb-close";
-  close.innerText = "✖️";
-  root.appendChild(close);
-  close.onclick = close_cb;
+  const {rootWrapper, root} = GetGraphicRootDivs();
+
   var plotRoot = document.createElement("div");
   plotRoot.className = "cb-load cb-plot";
   var plotRootHist = document.createElement("div");
@@ -124,85 +141,103 @@ function plot(data) {
   title.innerText = "Real-time audio callback load statistical analysis";
   var metricsRoot = document.createElement("div");
   metricsRoot.className = "cb-metrics";
-  metricsRoot.innerHTML = `
-  <table>
-  <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
-  <tr><td> Median</td><td> ${data.median.toPrecision(4)}</td></tr>
-  <tr><td> Variance</td><td> ${data.variance.toPrecision(4)}</td></tr>
-  <tr><td> Standard deviation</td><td> ${data.stddev.toPrecision(4)}</td></tr>
-  </table>
-  `;
+  if (!Number.isNaN(data.mean) && !Number.isNaN(data.median) &&
+      !Number.isNaN(data.variance) && !Number.isNaN(data.stddev)) {
+    metricsRoot.innerHTML = `
+      <table>
+      <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
+      <tr><td> Median</td><td> ${data.median.toPrecision(4)}</td></tr>
+      <tr><td> Variance</td><td> ${data.variance.toPrecision(4)}</td></tr>
+      <tr><td> Standard deviation</td><td> ${data.stddev.toPrecision(4)}</td></tr>
+      </table>
+      `;
+  }
 
   root.appendChild(title);
   root.appendChild(metricsRoot);
   root.appendChild(plotRoot);
   root.appendChild(plotRootHist);
-
-  document.body.appendChild(rootWrapper);
 }
-var m = window.wrappedJSObject.filteredMarkers;
-var budgets = new Float32Array(m.length);
-var idx_budgets = 0;
-var callbacks = new Float32Array(m.length);
-var idx_callbacks = 0;
-var cb_time = new Float32Array(m.length);
-var idx_cb_time = 0;
-var time_base = -1;
-for (var i = 0; i < m.length; i++) {
-  if (m[i].name.indexOf("budget") != -1) {
-    if (time_base == -1) {
-      time_base = m[i].start;
+
+/**
+ * Dataset looks like following
+ * {
+ *   `markerName`: [array of Result],
+ *   `markerName`: [array of Result],
+ *    ...
+ * }
+ * The full defintion of `markerName` is in [1]. Marker name won't be repeated.
+ * [1]  https://searchfox.org/mozilla-central/rev/0e3d9bfae6fdaa6cb29cbce3f25471d5708aedc3/dom/media/utils/PerformanceRecorder.h#73-80
+ *
+ * Result looks like following
+ * {
+ *   markerKey: key of the marker. eg. RequestDecode:V:576<h<=720:hw,vp9,
+ *   mean: mean value
+ *   median: median value
+ *   stddev: stddev value
+ *   variance: variance value
+ * }
+ */
+function plotPlaybackMarkers(dataSet) {
+  const {rootWrapper, root} = GetGraphicRootDivs();
+
+  let title = document.createElement("h1");
+  title.className = "cb-title";
+  title.innerText = "Media playback markers analysis";
+  root.appendChild(title);
+
+  // Dropdown menu for selecting the marker name.
+  let selectDiv = document.createElement("div");
+  selectDiv.className = "cb-select";
+  let selectBox = document.createElement("select");
+  selectBox.add(new Option("None"));
+  Object.entries(dataSet).forEach(([key, data]) => {
+    selectBox.add(new Option(key));
+  });
+  selectDiv.appendChild(selectBox);
+  let displayContent = document.createElement("div");
+  selectDiv.appendChild(displayContent);
+  root.appendChild(selectDiv);
+
+  // Prevent closing the whole diplay page by the root div click listener.
+  selectBox.onclick = event => {
+    event.stopPropagation();
+  };
+
+  selectBox.onchange = function() {
+    // Clear display for old markers first, then append new data.
+    while (displayContent.firstChild) {
+      displayContent.removeChild(displayContent.firstChild);
     }
-    cb_time[idx_cb_time++] = m[i].start - time_base;
-    budgets[idx_budgets++] = m[i].end - m[i].start;
-    continue;
-  }
-  if (m[i].name.indexOf("DataCallback") != -1) {
-    callbacks[idx_callbacks++] = m[i].end - m[i].start;
-    continue;
-  }
+
+    const selectedMarkerName = selectBox.options[selectBox.selectedIndex].text;
+    Object.entries(dataSet).forEach(([key, dataSet]) => {
+      for (let data of dataSet) {
+        if (data.markerName != selectedMarkerName) {
+          continue;
+        }
+        let metricsRoot = document.createElement("div");
+        metricsRoot.className = "cb-metrics";
+        if (!Number.isNaN(data.mean) && !Number.isNaN(data.median) &&
+            !Number.isNaN(data.variance) && !Number.isNaN(data.stddev)) {
+          // Some texts in the key would be incorrectly parse as an element, eg.
+          // "<h" so we add spaces to avoid that in order to show the complete
+          // key name correctly.
+          data.markerKey = data.markerKey.replace("<"," < ");
+          metricsRoot.innerHTML = `
+            <p>${data.markerName} : ${data.markerKey}</p>
+            <table>
+            <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
+            <tr><td> Median</td><td> ${data.median.toPrecision(4)}</td></tr>
+            <tr><td> Variance</td><td> ${data.variance.toPrecision(4)}</td></tr>
+            <tr><td> Standard deviation</td><td> ${data.stddev.toPrecision(4)}</td></tr>
+            </table>
+            `;
+        }
+        displayContent.appendChild(metricsRoot);
+      }
+    });
+  };
+
+
 }
-
-var callback_count = idx_callbacks;
-console.log(time_base, cb_time, callbacks, budgets);
-
-var load = new Float32Array(idx_callbacks);
-for (var i = 0; i < callback_count; i++) {
-  load[i] = callbacks[i] / budgets[i];
-}
-
-var results = {
-  mean:0,
-  median: 0,
-  stddev: 0,
-  variance: 0
-};
-
-
-var copy_load = load.slice(0);
-copy_load.sort((a, b) => a - b);
-results.median = copy_load[Math.floor(copy_load.length / 2)];
-var len = callback_count;
-// Mean
-var sum = 0;
-
-for (var i = 0; i < len; i++) {
-  sum += load[i];
-}
-results.mean = sum / len;
-
-// Variance
-results.variance = 0;
-for (var i = 0; i < len; i++) {
-  results.variance += Math.pow(load[i] - results.mean, 2);
-}
-results.variance /= len;
-
-// Standard deviation
-results.stddev = Math.sqrt(results.variance);
-results.load = load;
-results.time = cb_time;
-
-plot(results);
-
-console.log(results);
