@@ -2,7 +2,7 @@
 
 ![The extension icon, a stopwatch with a eighth note musical notation symbol instead of the clock hands](https://raw.githubusercontent.com/padenot/fx-profiler-audio-cb/master/icons/icon2x.png)
 
-Plot real-time audio callback data from the [Firefox
+Plot real-time audio callback data and media decoding statistics from the [Firefox
 profiler](https://profiler.firefox.com/).
 
 # Installation
