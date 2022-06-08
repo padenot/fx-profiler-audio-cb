@@ -1,3 +1,9 @@
+function escapeHTML(str){
+    var p = document.createElement("p");
+    p.appendChild(document.createTextNode(str));
+    return p.innerHTML;
+}
+
 // Create basic Div to display information. The page can contain multiple plots
 // at the same time.
 function GetGraphicRootDivs() {
@@ -223,7 +229,7 @@ function plotPlaybackMarkers(dataSet) {
           // Some texts in the key would be incorrectly parse as an element, eg.
           // "<h" so we add spaces to avoid that in order to show the complete
           // key name correctly.
-          data.markerKey = data.markerKey.replace("<"," < ");
+          data.markerKey = escapeHTML(data.markerKey);
           metricsRoot.innerHTML = `
             <p>${data.markerName} : ${data.markerKey}</p>
             <table>
