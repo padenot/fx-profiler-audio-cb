@@ -37,6 +37,7 @@ function collectPlaybackMarkersDuration(targetedName) {
         median: 0,
         stddev: 0,
         variance: 0,
+        durations: []
       };
 
       // Median
@@ -56,6 +57,8 @@ function collectPlaybackMarkersDuration(targetedName) {
         result.variance += Math.pow(value - result.mean, 2);
       }
       result.variance /= sortedData.length;
+      result.stddev = Math.sqrt(result.variance);
+      result.durations = data;
 
       if (name in results) {
         results[name].push(result)

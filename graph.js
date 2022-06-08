@@ -213,7 +213,7 @@ function plotPlaybackMarkers(dataSet) {
   selectBox.onchange = function() {
     // Clear display for old markers first, then append new data.
     while (displayContent.firstChild) {
-      displayContent.removeChild(displayContent.firstChild);
+      displayContent.innerHTML = "";
     }
 
     const selectedMarkerName = selectBox.options[selectBox.selectedIndex].text;
@@ -227,6 +227,8 @@ function plotPlaybackMarkers(dataSet) {
         }
         let metricsRoot = document.createElement("div");
         metricsRoot.className = "cb-metrics";
+        var plotRootHist = document.createElement("div");
+        plotRootHist.className = "cb-hist cb-plot";
         if (!Number.isNaN(data.mean) && !Number.isNaN(data.median) &&
             !Number.isNaN(data.variance) && !Number.isNaN(data.stddev)) {
           // Some texts in the key would be incorrectly parse as an element, eg.
@@ -234,7 +236,7 @@ function plotPlaybackMarkers(dataSet) {
           // key name correctly.
           data.markerKey = escapeHTML(data.markerKey);
           metricsRoot.innerHTML = `
-            <p>${data.markerName} : ${data.markerKey}</p>
+            <p><strong>${data.markerName}:</strong> ${data.markerKey}</p>
             <table>
             <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
             <tr><td> Median</td><td> ${data.median.toPrecision(4)}</td></tr>
@@ -242,8 +244,22 @@ function plotPlaybackMarkers(dataSet) {
             <tr><td> Standard deviation</td><td> ${data.stddev.toPrecision(4)}</td></tr>
             </table>
             `;
+
+            var trace = {
+              title: data.markerKey,
+              x: data.durations,
+              histnorm: 'probability',
+              type: 'histogram',
+              autosize: true,
+            };
+            var layoutHist = {
+              width: window.innerWidth * 0.75, // TODO: this is bad
+              title: data.markerKey
+            }
+            Plotly.newPlot(plotRootHist, [trace], layoutHist);
         }
         displayContent.appendChild(metricsRoot);
+        displayContent.appendChild(plotRootHist);
       }
     });
   };
