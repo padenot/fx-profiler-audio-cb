@@ -158,3 +158,82 @@ function plot(data) {
   root.appendChild(plotRoot);
   root.appendChild(plotRootHist);
 }
+
+/**
+ * Dataset looks like following
+ * {
+ *   `markerName`: [array of Result],
+ *   `markerName`: [array of Result],
+ *    ...
+ * }
+ * The full defintion of `markerName` is in [1]. Marker name won't be repeated.
+ * [1]  https://searchfox.org/mozilla-central/rev/0e3d9bfae6fdaa6cb29cbce3f25471d5708aedc3/dom/media/utils/PerformanceRecorder.h#73-80
+ *
+ * Result looks like following
+ * {
+ *   markerKey: key of the marker. eg. RequestDecode:V:576<h<=720:hw,vp9,
+ *   mean: mean value
+ *   median: median value
+ *   stddev: stddev value
+ *   variance: variance value
+ * }
+ */
+function plotPlaybackMarkers(dataSet) {
+  const {rootWrapper, root} = GetGraphicRootDivs();
+
+  let title = document.createElement("h1");
+  title.className = "cb-title";
+  title.innerText = "Media playback markers analysis";
+  root.appendChild(title);
+
+  // Dropdown menu for selecting the marker name.
+  let selectDiv = document.createElement("div");
+  selectDiv.className = "cb-select";
+  let selectBox = document.createElement("select");
+  selectBox.add(new Option("None"));
+  Object.entries(dataSet).forEach(([key, data]) => {
+    selectBox.add(new Option(key));
+  });
+  selectDiv.appendChild(selectBox);
+  let displayContent = document.createElement("div");
+  selectDiv.appendChild(displayContent);
+  root.appendChild(selectDiv);
+
+  // Prevent closing the whole diplay page by the root div click listener.
+  selectBox.onclick = event => {
+    event.stopPropagation();
+  };
+
+  selectBox.onchange = function() {
+    // Clear display for old markers first, then append new data.
+    while (displayContent.firstChild) {
+      displayContent.removeChild(displayContent.firstChild);
+    }
+
+    const selectedMarkerName = selectBox.options[selectBox.selectedIndex].text;
+    Object.entries(dataSet).forEach(([key, dataSet]) => {
+      for (let data of dataSet) {
+        if (data.markerName != selectedMarkerName) {
+          continue;
+        }
+        let metricsRoot = document.createElement("div");
+        metricsRoot.className = "cb-metrics";
+        if (!Number.isNaN(data.mean) && !Number.isNaN(data.median) &&
+            !Number.isNaN(data.variance) && !Number.isNaN(data.stddev)) {
+          metricsRoot.innerHTML = `
+            <p>${data.markerName} : ${data.markerKey}</p>
+            <table>
+            <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
+            <tr><td> Median</td><td> ${data.median.toPrecision(4)}</td></tr>
+            <tr><td> Variance</td><td> ${data.variance.toPrecision(4)}</td></tr>
+            <tr><td> Standard deviation</td><td> ${data.stddev.toPrecision(4)}</td></tr>
+            </table>
+            `;
+        }
+        displayContent.appendChild(metricsRoot);
+      }
+    });
+  };
+
+
+}
