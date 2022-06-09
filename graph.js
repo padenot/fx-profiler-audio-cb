@@ -249,7 +249,7 @@ function plotPlaybackMarkers(dataSet) {
             var trace = {
               title: data.markerKey,
               x: data.durations,
-              histnorm: 'probability',
+              histnorm: 'percent',
               type: 'histogram',
               autosize: true,
             };
@@ -260,7 +260,7 @@ function plotPlaybackMarkers(dataSet) {
                 title: 'Percentage',
               },
               xaxis: {
-                title: 'Time (Millisecond)',
+                title: 'Time (Milliseconds)',
               },
             }
             Plotly.newPlot(plotRootHist, [trace], layoutHist);
