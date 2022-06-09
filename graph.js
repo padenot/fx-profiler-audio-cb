@@ -210,7 +210,7 @@ function plotPlaybackMarkers(dataSet) {
     event.stopPropagation();
   };
 
-  selectBox.onchange = function() {
+  function displayStatistic() {
     // Clear display for old markers first, then append new data.
     while (displayContent.firstChild) {
       displayContent.innerHTML = "";
@@ -237,6 +237,7 @@ function plotPlaybackMarkers(dataSet) {
           data.markerKey = escapeHTML(data.markerKey);
           metricsRoot.innerHTML = `
             <p><strong>${data.markerName}:</strong> ${data.markerKey}</p>
+            <p>Sample count : ${data.durations.length}</p>
             <table>
             <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
             <tr><td> Median</td><td> ${data.median.toPrecision(4)}</td></tr>
@@ -254,7 +255,13 @@ function plotPlaybackMarkers(dataSet) {
             };
             var layoutHist = {
               width: window.innerWidth * 0.75, // TODO: this is bad
-              title: data.markerKey
+              title: data.markerKey,
+              yaxis: {
+                title: 'Percentage',
+              },
+              xaxis: {
+                title: 'Time (Millisecond)',
+              },
             }
             Plotly.newPlot(plotRootHist, [trace], layoutHist);
         }
@@ -263,6 +270,11 @@ function plotPlaybackMarkers(dataSet) {
       }
     });
   };
+  selectBox.onchange = displayStatistic;
 
-
+  // If we have any avaliable option than `None`, display the first one now.
+  if (selectBox.options.length > 1) {
+    selectBox.options[1].selected = true;
+    displayStatistic();
+  }
 }
