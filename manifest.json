@@ -2,13 +2,13 @@
   "manifest_version": 2,
   "name": "fx-profiler-audio-cb",
   "description": "Compute metrics and display visual representation of isosynchronous events",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "icons": {
     "48": "icons/icon.png",
     "96": "icons/icon2x.png"
   },
   "background": {
-    "scripts": ["plotly.js", "background_script.js", "playback_markers.js", "audio_budget.js", "playback_markers.js"]
+    "scripts": ["plotly.js", "background_script.js", "playback_markers.js", "audio_budget.js"]
   },
 
   "browser_action": {
