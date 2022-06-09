@@ -40,22 +40,32 @@
 .cb-root table {
   border-top: 2px solid gray;
   border-bottom: 2px solid gray;
-  width: 40%;
   border-collapse: collapse;
+  margin: 0 auto;
 }
 .cb-root .cb-metrics {
   width: 40%;
   padding-top: 3em;
   padding-bottom: 3em;
   margin: 0 auto;
-  display: flex;
   justify-content: center;
 }
 .cb-root .cb-metrics td:last-child {
   text-align: right;
 }
 .cb-root p {
-  text-align: left;
+  display: block;
+  margin: 1em auto;
+  text-align: center;
+  width: 100%;
+}
+.cb-root h2 {
+  display: block;
+  width: 100%;
+}
+
+.cb-root h2 code {
+  font-weight: 500;
 }
 
 .cb-title {

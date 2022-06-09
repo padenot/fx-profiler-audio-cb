@@ -236,7 +236,7 @@ function plotPlaybackMarkers(dataSet) {
           // key name correctly.
           data.markerKey = escapeHTML(data.markerKey);
           metricsRoot.innerHTML = `
-            <p><strong>${data.markerName}:</strong> ${data.markerKey}</p>
+            <h2>${data.markerName}: <code>${data.markerKey}</code></h2>
             <p>Sample count : ${data.durations.length}</p>
             <table>
             <tr><td> Mean</td><td> ${data.mean.toPrecision(4)}</td></tr>
@@ -255,7 +255,6 @@ function plotPlaybackMarkers(dataSet) {
             };
             var layoutHist = {
               width: window.innerWidth * 0.75, // TODO: this is bad
-              title: data.markerKey,
               yaxis: {
                 title: 'Percentage',
               },
