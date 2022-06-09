@@ -25,5 +25,10 @@
   ],
   "permissions": [
     "activeTab"
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{b349f3bd-960a-4a6c-968c-509ba2459958}"
+    }
+  }
 }
