@@ -144,7 +144,7 @@ function plot(data) {
   Plotly.newPlot(plotRootHist, [trace], layoutHist);
   var title = document.createElement("h1");
   title.className = "cb-title";
-  title.innerText = "Real-time audio callback load statistical analysis";
+  title.innerText = `Real-time audio callback load statistical analysis: ${data.name}`;
   var metricsRoot = document.createElement("div");
   metricsRoot.className = "cb-metrics";
   if (!Number.isNaN(data.mean) && !Number.isNaN(data.median) &&
