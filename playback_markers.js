@@ -22,7 +22,7 @@ function collectPlaybackMarkersDuration(targetedName) {
 (() => {
   const markerNames = [
     "RequestDecode", "RequestDemux", "RequestData",
-    "CopyDemuxedData", "CopyDecodedData",
+    "CopyDemuxedData", "CopyDecodedData", "DecodeFrame",
   ];
   let results = {};
   let shouldDisplayResult = false;
