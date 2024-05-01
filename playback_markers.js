@@ -1,5 +1,5 @@
 const markerNames = [
-  "RequestDecode", "RequestDemux", "RequestData",
+  "RequestDecode:A", "RequestDecode:V", "RequestDemux", "RequestData",
   "CopyDemuxedData", "CopyDecodedData", "DecodeFrame",
 ];
 
