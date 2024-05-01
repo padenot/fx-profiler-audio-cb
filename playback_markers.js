@@ -1,6 +1,6 @@
 const markerNames = [
-  "RequestDecode:A", "RequestDecode:V", "RequestDemux", "RequestData",
-  "CopyDemuxedData", "CopyDecodedData", "DecodeFrame",
+  "RequestDecode:A", "RequestDecode:V", "RequestDemux", "RequestData:A",
+  "RequestData:V", "CopyDemuxedData", "CopyDecodedData", "DecodeFrame",
 ];
 
 // Some decoders will internally queue decoded outputs, and return them later
