@@ -51,8 +51,8 @@ function collectPlaybackMarkersDuration(targetedName) {
     for (let idx = 1; idx < markerArray.length; idx++) {
       const cur = markerArray[idx], prev = markerArray[idx - 1];
       if (isAdjustmentRequired(name) && prev.end > cur.start) {
-        if (cur.data.sampleStartTimeUs != undefined &&
-            cur.data.sampleEndTimeUs != undefined) {
+        if (cur.data?.sampleStartTimeUs !== undefined &&
+            cur.data?.sampleEndTimeUs !== undefined) {
         console.log(
           `${name}:[${cur.data.sampleStartTimeUs},${cur.data.sampleEndTimeUs}] :` +
           `trimed sample duration from ${cur.end - cur.start} to ${cur.end - prev.end}`);
