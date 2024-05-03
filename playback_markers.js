@@ -1,6 +1,30 @@
+const markerNames = [
+  "RequestDecode:A", "RequestDecode:V", "RequestDemux", "RequestData:A",
+  "RequestData:V", "CopyDemuxedData", "CopyDecodedData", "DecodeFrame",
+];
+
+// Some decoders will internally queue decoded outputs, and return them later
+// when the amount of queued samples reaches a certain threshold. That makes
+// the the duration of markers unprecise. Those markers would have significant
+// overlap. We want to trim those overlapping in order to remove the queued time
+// made by the decoder so that we can observe the true decoding time.
+// See example in https://bugzilla.mozilla.org/show_bug.cgi?id=1894117#c1.
+const makersNeedTrimming = [
+  "RequestDecode", "DecodeFrame",
+];
+
+function isAdjustmentRequired(markerName) {
+  for (let marker of makersNeedTrimming) {
+    if (markerName.indexOf(markerName) != -1) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function collectPlaybackMarkersDuration(targetedName) {
   let result = {};
+  let markers = {};
   const categoryMediaPlayback = 16;
   for (let marker of window.wrappedJSObject.filteredMarkers) {
     if (marker.category != categoryMediaPlayback) {
@@ -9,21 +33,41 @@ function collectPlaybackMarkersDuration(targetedName) {
     if (marker.name.indexOf(targetedName) == -1) {
       continue;
     }
-    const duration = marker.end - marker.start;
-    if (marker.name in result) {
-      result[marker.name].push(duration)
+
+    if (marker.name in markers) {
+      markers[marker.name].push(marker)
     } else {
-      result[marker.name] = [ duration ];
+      markers[marker.name] = [ marker ];
     }
   }
+
+  // Calulate duration per maker's name
+  for (let name in markers) {
+    const markerArray = markers[name];
+    if (markerArray.length == 0) {
+      continue;
+    }
+    result[name] = [ markerArray[0].end - markerArray[0].start ];
+    for (let idx = 1; idx < markerArray.length; idx++) {
+      const cur = markerArray[idx], prev = markerArray[idx - 1];
+      if (isAdjustmentRequired(name) && prev.end > cur.start) {
+        if (cur.data?.sampleStartTimeUs !== undefined &&
+            cur.data?.sampleEndTimeUs !== undefined) {
+        console.log(
+          `${name}:[${cur.data.sampleStartTimeUs},${cur.data.sampleEndTimeUs}] :` +
+          `trimed sample duration from ${cur.end - cur.start} to ${cur.end - prev.end}`);
+        }
+        result[name].push( cur.end - prev.end );
+      } else {
+        result[name].push( cur.end - cur.start );
+      }
+    }
+  }
+
   return result;
 }
 
 (() => {
-  const markerNames = [
-    "RequestDecode", "RequestDemux", "RequestData",
-    "CopyDemuxedData", "CopyDecodedData", "DecodeFrame",
-  ];
   let results = {};
   let shouldDisplayResult = false;
   for (let name of markerNames) {
