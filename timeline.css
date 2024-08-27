@@ -1,0 +1,37 @@
+#timeline-container {
+    width: 100%;
+    height: 100px;  // Adjust based on your requirements
+    margin-top: 20px;
+    border: 1px solid #ccc;
+}
+
+#media-status {
+    margin-top: 10px;
+}
+
+/* Styles for the table container */
+#marker-details {
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+}
+
+/* Styles for the table */
+#marker-details table {
+    width: 100%;
+    border-collapse: collapse; /* Ensures that the divider lines are neat */
+}
+
+/* Styles for the table headers */
+#marker-details th {
+    background-color: #007BFF; /* A nice shade of blue, change as needed */
+    color: white;
+    padding: 10px;
+    border: 1px solid #CCCCCC; /* Light grey border for a subtle divider */
+}
+
+/* Styles for the table cells */
+#marker-details td {
+    text-align: left;
+    padding: 8px;
+    border: 1px solid #CCCCCC; /* Consistent with the header border */
+}
