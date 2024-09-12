@@ -32,6 +32,25 @@ body, html {
     font-family: Arial, sans-serif;
 }
 
+/* Ensure table cells display full text */
+table {
+    table-layout: auto; /* Allow automatic layout for the table */
+    width: 100%; /* Make the table take full width */
+}
+
+th, td {
+    overflow-wrap: break-word; /* Allow text to wrap within the cell */
+    word-wrap: break-word; /* For older browsers */
+    white-space: normal; /* Allow text to wrap */
+    padding: 8px; /* Add some padding */
+    border: 1px solid #ddd; /* Optional: Add border for clarity */
+}
+
+/* Optional: Add hover effect for better UX */
+tr:hover {
+    background-color: #f1f1f1; /* Light gray background on hover */
+}
+
 /* Styles for the table */
 #marker-details table {
     width: 100%;
@@ -84,6 +103,7 @@ body, html {
 }
 
 #marker-details {
+    /* Optional styles for the marker details */
     width: 100%;
     border-collapse: collapse;
 }

@@ -139,8 +139,8 @@ function updateMarkerDetails(markers, currentTime) {
     filteredMarkers.forEach(marker => {
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${marker.data.module}</td>
-            <td>${marker.data.name}</td>
+            <td>${marker.name}</td>
+            <td>${marker.data ? marker.data.name : ''}</td>
             <td>${marker.start.toFixed(2)}</td>
         `;
         table.appendChild(row);
