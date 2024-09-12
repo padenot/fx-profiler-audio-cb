@@ -1,8 +1,25 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#timeline-section {
+    height: 60%;
+    width: 100%;
+}
+
+#details-section {
+    height: 40%;
+    width: 100%;
+    overflow: hidden; /* Prevent overflow */
+}
+
+/* Add your existing styles below this line */
+
 #timeline-container {
     width: 100%;
-    height: 100px;  // Adjust based on your requirements
-    margin-top: 20px;
-    border: 1px solid #ccc;
+    height: 100%;
 }
 
 #media-status {
@@ -34,4 +51,49 @@
     text-align: left;
     padding: 8px;
     border: 1px solid #CCCCCC; /* Consistent with the header border */
+}
+
+.x-axis line,
+.x-axis path,
+.y-axis line,
+.y-axis path {
+    stroke: #000;
+}
+
+.x-axis text,
+.y-axis text {
+    font-size: 12px;
+}
+
+#timeline-container {
+    position: relative;
+}
+
+#current-time-display {
+    position: absolute;
+    bottom: 5px;
+    left: 10px;
+}
+
+#marker-details-container {
+    height: calc(100% - 30px); /* Adjust based on the height of media-status */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding: 10px; /* Optional padding */
+    box-sizing: border-box; /* Include padding in height calculation */
+}
+
+#marker-details {
+    /* Optional styles for the marker details */
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#marker-details th, #marker-details td {
+    border: 1px solid #ccc;
+    padding: 5px;
+    text-align: left;
+}
+
+text {
+    font-family: Arial, sans-serif; /* Optional font family */
 }

@@ -8,16 +8,18 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 function drawTimeline(markers) {
     const svg = d3.select('#timeline');
     const width = document.getElementById('timeline-container').clientWidth;
-    const height = 100;  // Set a fixed height for the SVG
-    svg.attr('width', width).attr('height', height);
+    const height = document.getElementById('timeline-container').clientHeight;
+    const margin = { top: 10, right: 20, bottom: 30, left: 40 };
 
-    // Set up a linear scale (not time scale)
-    const timeScale = d3.scaleLinear()
-        .domain([d3.min(markers, d => d.start), d3.max(markers, d => d.start)])
-        .range([0, width]);
+    svg.attr('width', width).attr('height', height);
 
     // Clear previous contents
     svg.selectAll('*').remove();
+
+    // Set up a linear scale for the x-axis
+    const timeScale = d3.scaleLinear()
+        .domain([d3.min(markers, d => d.start), d3.max(markers, d => d.start)])
+        .range([margin.left, width - margin.right]);
 
     // Add circles for each marker
     svg.selectAll('circle')
@@ -25,14 +27,15 @@ function drawTimeline(markers) {
         .enter()
         .append('circle')
         .attr('cx', d => timeScale(d.start))
-        .attr('cy', height / 2)
+        .attr('cy', height / 2) // Adjust this if you want to position them differently
         .attr('r', 5)
         .attr('fill', 'blue');
 
-    // Draw the X-axis for numeric timestamps
+    // Draw the X-axis at the bottom
     const xAxis = d3.axisBottom(timeScale).ticks(10);
     svg.append("g")
-        .attr("transform", `translate(0, ${height / 2})`)
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0, ${height - margin.bottom})`)
         .call(xAxis);
 
     // Movable vertical line
@@ -40,10 +43,21 @@ function drawTimeline(markers) {
         .attr("x1", width / 2)
         .attr("x2", width / 2)
         .attr("y1", 0)
-        .attr("y2", height)
+        .attr("y2", height - margin.bottom)
         .attr("stroke", "red")
         .attr("stroke-width", 2)
         .attr("cursor", "pointer");
+
+    // Current time text (initially set to just the timestamp)
+    const initialTimestamp = 0.00; // Set to your desired initial value
+    const currentTimeText = svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height - margin.bottom + 20) // Position it below the x-axis
+        .attr("text-anchor", "middle")
+        .attr("fill", "orange") // Different color to emphasize
+        .attr("font-size", "12px")
+        .text(initialTimestamp.toFixed(2)); // Show only the initial timestamp
+
     setupKeyboardNavigation(verticalLine, timeScale, markers);
 
     // Drag and click interaction
@@ -62,8 +76,11 @@ function drawTimeline(markers) {
     function moveLine(x) {
         verticalLine.attr("x1", x).attr("x2", x);
         const currentTimestamp = timeScale.invert(x);
-        updateCurrentTimeDisplay(currentTimestamp);
         updateMarkerDetails(markers, currentTimestamp);
+
+        // Update current time text position and value to show only the timestamp
+        currentTimeText.attr("x", x)
+            .text(currentTimestamp.toFixed(2)); // Show only the timestamp
     }
 }
 
@@ -77,7 +94,7 @@ function setupKeyboardNavigation(verticalLine, timeScale, markers) {
 
             // Get the current position of the line
             let currentX = parseFloat(verticalLine.attr('x1'));
-            
+
             // Update position based on the key pressed
             if (event.key === 'ArrowLeft') {
                 currentX -= step;
@@ -93,24 +110,88 @@ function setupKeyboardNavigation(verticalLine, timeScale, markers) {
 
             // Update the displayed time and marker details
             const currentTime = timeScale.invert(currentX);
-            updateCurrentTimeDisplay(currentTime);
+
             updateMarkerDetails(markers, currentTime);
         }
     });
 }
 
-function updateCurrentTimeDisplay(time) {
-    document.getElementById("current-time-display").textContent = `${time.toFixed(2)}`;
+function updateMarkerDetails(markers, currentTime) {
+    const range = 3; // Range in seconds
+    const filteredMarkers = markers.filter(marker =>
+        marker.start >= (currentTime - range) && marker.start <= (currentTime + range)
+    );
+
+    // Clear previous details
+    const markerDetailsContainer = document.getElementById("marker-details");
+    markerDetailsContainer.innerHTML = ""; // Clear existing details
+
+    // Create a table to display the markers within the range
+    const table = document.createElement("table");
+    const headerRow = document.createElement("tr");
+    headerRow.innerHTML = `
+        <th>Module</th>
+        <th>Name</th>
+        <th>Timestamp</th>
+    `;
+    table.appendChild(headerRow);
+
+    filteredMarkers.forEach(marker => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${marker.data.module}</td>
+            <td>${marker.data.name}</td>
+            <td>${marker.start.toFixed(2)}</td>
+        `;
+        table.appendChild(row);
+    });
+
+    markerDetailsContainer.appendChild(table);
 }
 
-function updateMarkerDetails(markers, currentTime) {
-    let closest = markers.reduce((prev, curr) => {
-        return (Math.abs(curr.start - currentTime) < Math.abs(prev.start - currentTime) ? curr : prev);
-    });
-    document.getElementById("marker-module").textContent = closest.data.module;
-    document.getElementById("marker-name").textContent = closest.data.name;
-    document.getElementById("marker-timestamp").textContent = closest.start.toFixed(2);
+// Assuming you have a function that initializes the timeline
+function initializeTimeline() {
+    const container = d3.select("#timeline-container");
+    const width = container.node().getBoundingClientRect().width;
+    const height = container.node().getBoundingClientRect().height;
+    const margin = { top: 10, right: 20, bottom: 40, left: 40 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    const svg = d3.select("#timeline")
+        .attr("width", width)
+        .attr("height", height);
+
+    // Clear existing content
+    svg.selectAll("*").remove();
+
+    const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Set up your x scale
+    const x = d3.scaleLinear()
+        .range([0, chartWidth]);
+
+    // Set up your x axis
+    const xAxis = d3.axisBottom(x);
+
+    // Append x-axis at the bottom of the chart area
+    chart.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${chartHeight})`)
+        .call(xAxis);
+
+    // Your existing D3 code to create the timeline goes here
+    // Make sure to use chartWidth and chartHeight for your timeline elements
+
+    // Ensure axis labels are visible
+    svg.selectAll(".x-axis text")
+        .attr("dy", "1em");
 }
+
+// Call the function when the window loads or resizes
+window.addEventListener('load', initializeTimeline);
+window.addEventListener('resize', initializeTimeline);
 
 
 

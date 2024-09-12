@@ -8,24 +8,18 @@
     <script src="timeline.js"></script>
 </head>
 <body>
-    <div id="timeline-container">
-        <svg id="timeline"></svg>
-    </div>
-    <div id="media-status">Current Time: <span id="current-time-display">0:00</span></div>
-    <div id="marker-details">
-        <table>
-            <tr>
-                <th>Module</th>
-                <th>Name</th>
-                <th>Timestamp</th>
-            </tr>
-            <tr>
-                <td id="marker-module"></td>
-                <td id="marker-name"></td>
-                <td id="marker-timestamp"></td> 
-            </tr>
-        </table>
+    <!-- Timeline section -->
+    <div id="timeline-section">
+        <div id="timeline-container">
+            <svg id="timeline"></svg>
+        </div>
     </div>
 
+    <!-- Details section -->
+    <div id="details-section">
+        <div id="marker-details-container">
+            <div id="marker-details"></div> <!-- Ensure this container exists -->
+        </div>
+    </div>
 </body>
 </html>
