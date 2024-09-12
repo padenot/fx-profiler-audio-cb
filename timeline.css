@@ -10,7 +10,7 @@ body, html {
 }
 
 #details-section {
-    height: 40%;
+    height: 40%; /* Adjust this if needed */
     width: 100%;
     overflow: hidden; /* Prevent overflow */
 }
@@ -40,10 +40,11 @@ body, html {
 
 /* Styles for the table headers */
 #marker-details th {
-    background-color: #007BFF; /* A nice shade of blue, change as needed */
-    color: white;
-    padding: 10px;
-    border: 1px solid #CCCCCC; /* Light grey border for a subtle divider */
+    position: sticky; /* Make the header sticky */
+    top: 0; /* Stick to the top of the container */
+    background-color: #007BFF; /* Preserve the previous background color */
+    color: white; /* Preserve the text color */
+    z-index: 10; /* Ensure it stays above other content */
 }
 
 /* Styles for the table cells */
@@ -83,7 +84,6 @@ body, html {
 }
 
 #marker-details {
-    /* Optional styles for the marker details */
     width: 100%;
     border-collapse: collapse;
 }
@@ -96,4 +96,23 @@ body, html {
 
 text {
     font-family: Arial, sans-serif; /* Optional font family */
+}
+
+#marker-details thead {
+    position: sticky; /* Make the header sticky */
+    top: 0; /* Stick to the top of the container */
+    background-color: white; /* Background color for the header */
+    z-index: 10; /* Ensure it stays above other content */
+}
+
+#marker-details tbody {
+    display: block; /* Make tbody block to control overflow */
+    max-height: calc(100% - 30px); /* Adjust based on header height */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+#marker-details tr {
+    display: table; /* Ensure rows are displayed as table rows */
+    table-layout: fixed; /* Prevent layout shifts */
+    width: 100%; /* Ensure rows take full width */
 }
