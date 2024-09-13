@@ -52,12 +52,16 @@ function drawTabs(groupedMarkers) {
 
 // Function to draw markers for the selected group
 function drawGroupMarkers(markers, groupedMarkers) {
-    const svg = d3.select('#group-timeline'); // Assuming you have a separate SVG for group markers
-    const width = document.getElementById('timeline-container').clientWidth;
-    const height = 200; // Set a fixed height for the SVG
-    const margin = { top: 10, right: 20, bottom: 30, left: 40 }; // Original bottom margin
+    const svg = d3.select('#group-timeline'); // Select the SVG for group markers
+    const container = document.getElementById('timeline-container');
+    const width = container.clientWidth; // Get the width of the timeline container
+    const height = container.clientHeight; // Get the height of the timeline container
+    const margin = { top: 10, right: 20, bottom: 30, left: 40 }; // Define margins
 
-    svg.attr('width', width).attr('height', height);
+    svg.attr('width', width).attr('height', height) // Set SVG dimensions to match the container
+       .attr('viewBox', `0 0 ${width} ${height}`) // Set viewBox for scaling
+       .attr('preserveAspectRatio', 'xMinYMin meet'); // Preserve aspect ratio
+
     svg.selectAll('*').remove(); // Clear previous contents
 
     // Set up a linear scale for the x-axis
