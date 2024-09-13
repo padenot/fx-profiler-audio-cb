@@ -66,10 +66,9 @@ function drawGroupMarkers(markers, groupedMarkers) {
         .range([margin.left, width - margin.right]);
 
     // Set up a linear scale for the y-axis
-    const maxYValue = d3.max(markers, d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0); // Get the maximum value for Y-axis
-    console.log("Max Y Value:", maxYValue);
+    const maxYValue = d3.max(markers, d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0) / 1000; // Convert to seconds
     const yScale = d3.scaleLinear()
-        .domain([0, maxYValue > 0 ? maxYValue : 1]) // Ensure at least 1 if maxYValue is 0
+        .domain([0, maxYValue > 0 ? maxYValue : 1]) // Start from 0 to maxYValue
         .range([height - margin.bottom, margin.top]); // Invert Y-axis
 
     // Draw the X-axis at the bottom
@@ -80,7 +79,7 @@ function drawGroupMarkers(markers, groupedMarkers) {
         .call(xAxis);
 
     // Draw the Y-axis on the left
-    const yAxis = d3.axisLeft(yScale).ticks(5).tickFormat(d => d + ' ms'); // Format ticks to show units
+    const yAxis = d3.axisLeft(yScale).ticks(5).tickFormat(d => d + ' s'); // Format ticks to show units in seconds
     svg.append("g")
         .attr("class", "y-axis")
         .attr("transform", `translate(${margin.left}, 0)`)
@@ -104,8 +103,8 @@ function drawGroupMarkers(markers, groupedMarkers) {
         // Draw currentTimeMs and mediaDurationMs
         timeUpdateMarkers.forEach(marker => {
             if (marker.data) { // Check if data exists
-                const currentY = yScale(marker.data.currentTimeMs); // Map to Y-axis
-                const durationY = yScale(marker.data.mediaDurationMs); // Map to Y-axis
+                const currentY = yScale(marker.data.currentTimeMs / 1000); // Convert to seconds
+                const durationY = yScale(marker.data.mediaDurationMs / 1000); // Convert to seconds
 
                 // Draw currentTimeMs
                 svg.append('circle')
@@ -130,9 +129,9 @@ function drawGroupMarkers(markers, groupedMarkers) {
             .append('line')
             .attr('class', 'mediaDuration')
             .attr('x1', d => timeScale(d.start))
-            .attr('y1', d => d.data ? yScale(d.data.mediaDurationMs) : height) // Default to height if data is null
+            .attr('y1', d => d.data ? yScale(d.data.mediaDurationMs / 1000) : height) // Convert to seconds
             .attr('x2', (d, i) => i < timeUpdateMarkers.length - 1 ? timeScale(timeUpdateMarkers[i + 1].start) : timeScale(d.start))
-            .attr('y2', (d, i) => i < timeUpdateMarkers.length - 1 && timeUpdateMarkers[i + 1].data ? yScale(timeUpdateMarkers[i + 1].data.mediaDurationMs) : height) // Default to height if data is null
+            .attr('y2', (d, i) => i < timeUpdateMarkers.length - 1 && timeUpdateMarkers[i + 1].data ? yScale(timeUpdateMarkers[i + 1].data.mediaDurationMs / 1000) : height) // Convert to seconds
             .attr('stroke', 'green')
             .attr('stroke-width', 2);
 
@@ -143,9 +142,9 @@ function drawGroupMarkers(markers, groupedMarkers) {
             .append('line')
             .attr('class', 'currentTime')
             .attr('x1', d => timeScale(d.start))
-            .attr('y1', d => d.data ? yScale(d.data.currentTimeMs) : height) // Default to height if data is null
+            .attr('y1', d => d.data ? yScale(d.data.currentTimeMs / 1000) : height) // Convert to seconds
             .attr('x2', (d, i) => i < timeUpdateMarkers.length - 1 ? timeScale(timeUpdateMarkers[i + 1].start) : timeScale(d.start))
-            .attr('y2', (d, i) => i < timeUpdateMarkers.length - 1 && timeUpdateMarkers[i + 1].data ? yScale(timeUpdateMarkers[i + 1].data.currentTimeMs) : height) // Default to height if data is null
+            .attr('y2', (d, i) => i < timeUpdateMarkers.length - 1 && timeUpdateMarkers[i + 1].data ? yScale(timeUpdateMarkers[i + 1].data.currentTimeMs / 1000) : height) // Convert to seconds
             .attr('stroke', 'orange')
             .attr('stroke-width', 2);
 
@@ -297,6 +296,3 @@ function initializeTimeline() {
 // Call the function when the window loads or resizes
 window.addEventListener('load', initializeTimeline);
 window.addEventListener('resize', initializeTimeline);
-
-
-
