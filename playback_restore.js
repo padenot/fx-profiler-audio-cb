@@ -38,6 +38,7 @@ function processMarkers(markers, module) {
       if (!groupedMarkers[id]) {
         groupedMarkers[id] = [];
       }
+      modifiedMarker.name = idEventMatch[2]; // Set name to only the event name
       groupedMarkers[id].push(modifiedMarker);
       continue; // Skip adding to results for grouped markers
     }
