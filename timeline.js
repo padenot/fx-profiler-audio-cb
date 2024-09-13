@@ -193,6 +193,19 @@ function drawGroupMarkers(markers, groupedMarkers) {
       const [x] = d3.pointer(event);
       moveLine(x, groupedMarkers, yScale, svg); // Pass groupedMarkers and yScale to moveLine
     });
+
+    // Add D3 drag behavior to the vertical line
+    const drag = d3.drag()
+      .on("start", function(event) {
+        d3.select(this).raise(); // Bring the line to the front
+      })
+      .on("drag", function(event) {
+        const x = d3.pointer(event)[0]; // Get the current mouse position
+        moveLine(x, groupedMarkers, yScale, svg); // Move the line based on mouse position
+      });
+
+    // Apply the drag behavior to the vertical line
+    verticalLine.call(drag);
   }
 }
 
