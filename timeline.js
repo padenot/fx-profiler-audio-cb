@@ -1,47 +1,85 @@
 // Set up listener for incoming data
 browser.runtime.onMessage.addListener((message) => {
     if (message.action === "loadMarkers") {
-        // Temporarily only draw regularMarkers
-        const { regularMarkers } = message; // Destructure regularMarkers
-        drawTimeline(regularMarkers); // Call the function to draw only regularMarkers
+        const groupedMarkers = message.groupedMarkers; // Store the groupedMarkers
+        drawTabs(groupedMarkers); // Draw tabs based on grouped markers
+        // Temporarily only draw the markers for the first group
+        const firstGroupId = Object.keys(groupedMarkers)[0];
+        if (firstGroupId) {
+            currentGroupId = firstGroupId; // Set the current group ID
+            drawGroupMarkers(groupedMarkers[firstGroupId], groupedMarkers); // Pass the entire groupedMarkers
+        }
     }
 });
 
-function drawTimeline(markers) {
-    const svg = d3.select('#timeline');
-    const width = document.getElementById('timeline-container').clientWidth;
-    const height = document.getElementById('timeline-container').clientHeight;
-    const margin = { top: 10, right: 20, bottom: 30, left: 40 };
+let currentGroupId = null; // Track the currently selected group
+let verticalLine; // Variable to hold the vertical line element
+let currentTimeText; // Variable to hold the current time text element
+let timeScale; // Define timeScale in a broader scope
 
-    svg.attr('width', width).attr('height', height);
+// Function to draw tabs
+function drawTabs(groupedMarkers) {
+    const tabContainer = d3.select("#tab-container");
+    tabContainer.selectAll("*").remove(); // Clear existing tabs
 
-    // Clear previous contents
-    svg.selectAll('*').remove();
+    // Create a tab for each group
+    Object.keys(groupedMarkers).forEach(id => {
+        const tab = tabContainer.append("div")
+            .attr("class", "tab")
+            .text(id) // Display the ID as the tab label
+            .on("click", () => {
+                currentGroupId = id; // Set the current group ID
+                drawGroupMarkers(groupedMarkers[id], groupedMarkers); // Draw markers for the selected group
+            });
 
-    // Set up a linear scale for the x-axis
-    const timeScale = d3.scaleLinear()
-        .domain([d3.min(markers, d => d.start), d3.max(markers, d => d.start)])
-        .range([margin.left, width - margin.right]);
+        // Close button for the tab
+        tab.append("span")
+            .attr("class", "close-btn")
+            .text("✖") // Close icon
+            .on("click", (event) => {
+                event.stopPropagation(); // Prevent tab click event
+                tab.remove(); // Remove the tab
+                delete groupedMarkers[id]; // Optionally remove from groupedMarkers
+            });
+    });
+}
 
-    // Add circles for each marker
+// Function to draw markers for the selected group
+function drawGroupMarkers(markers, groupedMarkers) {
+  const svg = d3.select('#group-timeline'); // Assuming you have a separate SVG for group markers
+  const width = document.getElementById('timeline-container').clientWidth;
+  const height = 200; // Set a fixed height for the SVG
+  const margin = { top: 10, right: 20, bottom: 30, left: 40 }; // Original bottom margin
+
+  svg.attr('width', width).attr('height', height);
+  svg.selectAll('*').remove(); // Clear previous contents
+
+  // Set up a linear scale for the x-axis
+  timeScale = d3.scaleLinear()
+      .domain([0, d3.max(markers, d => d.start)]) // Adjust domain based on your data
+      .range([margin.left, width - margin.right]);
+
+  // Draw the X-axis at the bottom
+  const xAxis = d3.axisBottom(timeScale).ticks(10);
+  svg.append("g")
+      .attr("class", "x-axis")
+      .attr("transform", `translate(0, ${height - margin.bottom})`)
+      .call(xAxis);
+
+  // If there are markers, draw them
+  if (markers.length > 0) {
+    // Add circles for each marker in the selected group
     svg.selectAll('circle')
         .data(markers)
         .enter()
         .append('circle')
         .attr('cx', d => timeScale(d.start))
-        .attr('cy', height / 2) // Adjust this if you want to position them differently
+        .attr('cy', height / 2) // Center vertically
         .attr('r', 5)
         .attr('fill', 'blue');
 
-    // Draw the X-axis at the bottom
-    const xAxis = d3.axisBottom(timeScale).ticks(10);
-    svg.append("g")
-        .attr("class", "x-axis")
-        .attr("transform", `translate(0, ${height - margin.bottom})`)
-        .call(xAxis);
-
     // Movable vertical line
-    const verticalLine = svg.append("line")
+    verticalLine = svg.append("line")
         .attr("x1", width / 2)
         .attr("x2", width / 2)
         .attr("y1", 0)
@@ -52,7 +90,7 @@ function drawTimeline(markers) {
 
     // Current time text (initially set to just the timestamp)
     const initialTimestamp = 0.00; // Set to your desired initial value
-    const currentTimeText = svg.append("text")
+    currentTimeText = svg.append("text")
         .attr("x", width / 2)
         .attr("y", height - margin.bottom + 20) // Position it below the x-axis
         .attr("text-anchor", "middle")
@@ -60,95 +98,89 @@ function drawTimeline(markers) {
         .attr("font-size", "12px")
         .text(initialTimestamp.toFixed(2)); // Show only the initial timestamp
 
-    setupKeyboardNavigation(verticalLine, timeScale, markers);
+    // Set up keyboard navigation for the vertical line
+    setupKeyboardNavigation(verticalLine, markers);
 
-    // Drag and click interaction
+    // Click interaction to move the vertical line
     svg.on("click", function(event) {
-        const x = d3.pointer(event, this)[0];
-        moveLine(x);
+      const [x] = d3.pointer(event);
+      moveLine(x, groupedMarkers); // Pass groupedMarkers to moveLine
     });
+  }
+}
 
-    const drag = d3.drag()
-        .on("drag", function(event) {
-            moveLine(event.x);
-        });
+// Function to set up keyboard navigation
+function setupKeyboardNavigation(verticalLine, markers) {
+  const step = (timeScale.range()[1] - timeScale.range()[0]) / 100; // Defines the step size for each key press
 
-    verticalLine.call(drag);
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      // Prevent default to stop any default behavior like scrolling
+      event.preventDefault();
 
-    function moveLine(x) {
-        verticalLine.attr("x1", x).attr("x2", x);
-        const currentTimestamp = timeScale.invert(x);
-        updateMarkerDetails(markers, currentTimestamp);
+      // Get the current position of the line
+      let currentX = parseFloat(verticalLine.attr('x1'));
 
-        // Update current time text position and value to show only the timestamp
-        currentTimeText.attr("x", x)
-            .text(currentTimestamp.toFixed(2)); // Show only the timestamp
+      // Update position based on the key pressed
+      if (event.key === 'ArrowLeft') {
+        currentX -= step;
+      } else if (event.key === 'ArrowRight') {
+        currentX += step;
+      }
+
+      // Clamp the value to ensure it doesn't go out of bounds
+      currentX = Math.max(timeScale.range()[0], Math.min(currentX, timeScale.range()[1]));
+
+      // Move the line
+      moveLine(currentX, markers); // Pass markers to moveLine
     }
+  });
 }
 
-function setupKeyboardNavigation(verticalLine, timeScale, markers) {
-    const step = (timeScale.range()[1] - timeScale.range()[0]) / 100; // Defines the step size for each key press
+// Function to move the vertical line and update the current time text
+function moveLine(x, groupedMarkers) {
+  verticalLine.attr('x1', x).attr('x2', x);
+  const currentTime = timeScale.invert(x);
+  updateMarkerDetails(currentGroupId, currentTime, groupedMarkers); // Pass groupedMarkers
 
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-            // Prevent default to stop any default behavior like scrolling
-            event.preventDefault();
-
-            // Get the current position of the line
-            let currentX = parseFloat(verticalLine.attr('x1'));
-
-            // Update position based on the key pressed
-            if (event.key === 'ArrowLeft') {
-                currentX -= step;
-            } else if (event.key === 'ArrowRight') {
-                currentX += step;
-            }
-
-            // Clamp the value to ensure it doesn't go out of bounds
-            currentX = Math.max(0, Math.min(currentX, timeScale.range()[1]));
-
-            // Move the line
-            verticalLine.attr('x1', currentX).attr('x2', currentX);
-
-            // Update the displayed time and marker details
-            const currentTime = timeScale.invert(currentX);
-
-            updateMarkerDetails(markers, currentTime);
-        }
-    });
+  // Update current time text position and value to show only the timestamp
+  currentTimeText.attr("x", x)
+      .text(currentTime.toFixed(2)); // Show only the timestamp
 }
 
-function updateMarkerDetails(markers, currentTime) {
-    const range = 3; // Range in seconds
-    const filteredMarkers = markers.filter(marker =>
-        marker.start >= (currentTime - range) && marker.start <= (currentTime + range)
-    );
+// Function to update marker details (implementation may vary)
+function updateMarkerDetails(groupId, currentTime, groupedMarkers) {
+  const range = 3; // Range in seconds
+  const markers = groupedMarkers[groupId] || []; // Get markers for the current group
+  const filteredMarkers = markers.filter(marker =>
+      marker.start >= (currentTime - range) && marker.start <= (currentTime + range)
+  );
 
-    // Clear previous details
-    const markerDetailsContainer = document.getElementById("marker-details");
-    markerDetailsContainer.innerHTML = ""; // Clear existing details
+  // Clear previous details
+  const markerDetailsContainer = document.getElementById("marker-details");
+  markerDetailsContainer.innerHTML = ""; // Clear existing details
 
-    // Create a table to display the markers within the range
-    const table = document.createElement("table");
-    const headerRow = document.createElement("tr");
-    headerRow.innerHTML = `
-        <th>Module</th>
-        <th>Name</th>
-        <th>Timestamp</th>
-    `;
-    table.appendChild(headerRow);
+  // Create a table to display the markers within the range
+  const table = document.createElement("table");
+  const headerRow = document.createElement("tr");
+  headerRow.innerHTML = `
+      <th>Module</th>
+      <th>Name</th>
+      <th>Timestamp</th>
+  `;
+  table.appendChild(headerRow);
 
-    filteredMarkers.forEach(marker => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${marker.name}</td>
-            <td>${marker.data ? marker.data.name : ''}</td>
-            <td>${marker.start.toFixed(2)}</td>
-        `;
-        table.appendChild(row);
-    });
+  filteredMarkers.forEach(marker => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+          <td>${marker.name}</td>
+          <td>${marker.data ? marker.data.name : ''}</td>
+          <td>${marker.start.toFixed(2)}</td>
+      `;
+      table.appendChild(row);
+  });
 
-    markerDetailsContainer.appendChild(table);
+  markerDetailsContainer.appendChild(table);
 }
 
 // Assuming you have a function that initializes the timeline

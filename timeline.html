@@ -2,35 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timeline Visualization</title>
     <link rel="stylesheet" href="timeline.css">
     <script src="d3.min.js"></script>
     <script src="timeline.js"></script>
 </head>
 <body>
-    <!-- Timeline section -->
-    <div id="timeline-section">
-        <div id="timeline-container">
-            <svg id="timeline"></svg>
-        </div>
-    </div>
+    <!-- Tab container for media element groups -->
+    <div id="tab-container" class="tab-container"></div>
 
-    <!-- Details section -->
-    <div id="details-section">
-        <div id="marker-details-container">
-            <table id="marker-details">
-                <thead>
-                    <tr>
-                        <th>Module</th>
-                        <th>Name</th>
-                        <th>Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Marker rows will be dynamically added here -->
-                </tbody>
-            </table>
-        </div>
+    <div id="timeline-container">
+        <svg id="group-timeline"></svg>
+        <div id="marker-details"></div>
     </div>
 </body>
 </html>
