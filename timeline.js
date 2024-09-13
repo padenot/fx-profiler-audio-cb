@@ -52,67 +52,132 @@ function drawTabs(groupedMarkers) {
 
 // Function to draw markers for the selected group
 function drawGroupMarkers(markers, groupedMarkers) {
-  const svg = d3.select('#group-timeline'); // Assuming you have a separate SVG for group markers
-  const width = document.getElementById('timeline-container').clientWidth;
-  const height = 200; // Set a fixed height for the SVG
-  const margin = { top: 10, right: 20, bottom: 30, left: 40 }; // Original bottom margin
+    const svg = d3.select('#group-timeline'); // Assuming you have a separate SVG for group markers
+    const width = document.getElementById('timeline-container').clientWidth;
+    const height = 200; // Set a fixed height for the SVG
+    const margin = { top: 10, right: 20, bottom: 30, left: 40 }; // Original bottom margin
 
-  svg.attr('width', width).attr('height', height);
-  svg.selectAll('*').remove(); // Clear previous contents
+    svg.attr('width', width).attr('height', height);
+    svg.selectAll('*').remove(); // Clear previous contents
 
-  // Set up a linear scale for the x-axis
-  timeScale = d3.scaleLinear()
-      .domain([0, d3.max(markers, d => d.start)]) // Adjust domain based on your data
-      .range([margin.left, width - margin.right]);
+    // Set up a linear scale for the x-axis
+    timeScale = d3.scaleLinear()
+        .domain([0, d3.max(markers, d => d.start)]) // Adjust domain based on your data
+        .range([margin.left, width - margin.right]);
 
-  // Draw the X-axis at the bottom
-  const xAxis = d3.axisBottom(timeScale).ticks(10);
-  svg.append("g")
-      .attr("class", "x-axis")
-      .attr("transform", `translate(0, ${height - margin.bottom})`)
-      .call(xAxis);
+    // Set up a linear scale for the y-axis
+    const maxYValue = d3.max(markers, d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0); // Get the maximum value for Y-axis
+    console.log("Max Y Value:", maxYValue);
+    const yScale = d3.scaleLinear()
+        .domain([0, maxYValue > 0 ? maxYValue : 1]) // Ensure at least 1 if maxYValue is 0
+        .range([height - margin.bottom, margin.top]); // Invert Y-axis
 
-  // If there are markers, draw them
-  if (markers.length > 0) {
-    // Add circles for each marker in the selected group
-    svg.selectAll('circle')
-        .data(markers)
-        .enter()
-        .append('circle')
-        .attr('cx', d => timeScale(d.start))
-        .attr('cy', height / 2) // Center vertically
-        .attr('r', 5)
-        .attr('fill', 'blue');
+    // Draw the X-axis at the bottom
+    const xAxis = d3.axisBottom(timeScale).ticks(10);
+    svg.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0, ${height - margin.bottom})`)
+        .call(xAxis);
 
-    // Movable vertical line
-    verticalLine = svg.append("line")
-        .attr("x1", width / 2)
-        .attr("x2", width / 2)
-        .attr("y1", 0)
-        .attr("y2", height - margin.bottom)
-        .attr("stroke", "red")
-        .attr("stroke-width", 2)
-        .attr("cursor", "pointer");
+    // Draw the Y-axis on the left
+    const yAxis = d3.axisLeft(yScale).ticks(5).tickFormat(d => d + ' ms'); // Format ticks to show units
+    svg.append("g")
+        .attr("class", "y-axis")
+        .attr("transform", `translate(${margin.left}, 0)`)
+        .call(yAxis);
 
-    // Current time text (initially set to just the timestamp)
-    const initialTimestamp = 0.00; // Set to your desired initial value
-    currentTimeText = svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", height - margin.bottom + 20) // Position it below the x-axis
-        .attr("text-anchor", "middle")
-        .attr("fill", "orange") // Different color to emphasize
-        .attr("font-size", "12px")
-        .text(initialTimestamp.toFixed(2)); // Show only the initial timestamp
+    // If there are markers, draw them
+    if (markers.length > 0) {
+        // Add circles for each marker in the selected group
+        svg.selectAll('circle')
+            .data(markers)
+            .enter()
+            .append('circle')
+            .attr('cx', d => timeScale(d.start))
+            .attr('cy', height / 2) // Center vertically
+            .attr('r', 5)
+            .attr('fill', 'blue');
 
-    // Set up keyboard navigation for the vertical line
-    setupKeyboardNavigation(verticalLine, markers);
+        // Filter markers for 'timeupdate'
+        const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
 
-    // Click interaction to move the vertical line
-    svg.on("click", function(event) {
-      const [x] = d3.pointer(event);
-      moveLine(x, groupedMarkers); // Pass groupedMarkers to moveLine
-    });
-  }
+        // Draw currentTimeMs and mediaDurationMs
+        timeUpdateMarkers.forEach(marker => {
+            if (marker.data) { // Check if data exists
+                const currentY = yScale(marker.data.currentTimeMs); // Map to Y-axis
+                const durationY = yScale(marker.data.mediaDurationMs); // Map to Y-axis
+
+                // Draw currentTimeMs
+                svg.append('circle')
+                    .attr('cx', timeScale(marker.start))
+                    .attr('cy', currentY)
+                    .attr('r', 5)
+                    .attr('fill', 'orange'); // Different color for currentTimeMs
+
+                // Draw mediaDurationMs
+                svg.append('circle')
+                    .attr('cx', timeScale(marker.start))
+                    .attr('cy', durationY)
+                    .attr('r', 5)
+                    .attr('fill', 'green'); // Different color for mediaDurationMs
+            }
+        });
+
+        // Connect mediaDurationMs with lines
+        svg.selectAll('line.mediaDuration')
+            .data(timeUpdateMarkers)
+            .enter()
+            .append('line')
+            .attr('class', 'mediaDuration')
+            .attr('x1', d => timeScale(d.start))
+            .attr('y1', d => d.data ? yScale(d.data.mediaDurationMs) : height) // Default to height if data is null
+            .attr('x2', (d, i) => i < timeUpdateMarkers.length - 1 ? timeScale(timeUpdateMarkers[i + 1].start) : timeScale(d.start))
+            .attr('y2', (d, i) => i < timeUpdateMarkers.length - 1 && timeUpdateMarkers[i + 1].data ? yScale(timeUpdateMarkers[i + 1].data.mediaDurationMs) : height) // Default to height if data is null
+            .attr('stroke', 'green')
+            .attr('stroke-width', 2);
+
+        // Connect currentTimeMs with lines
+        svg.selectAll('line.currentTime')
+            .data(timeUpdateMarkers)
+            .enter()
+            .append('line')
+            .attr('class', 'currentTime')
+            .attr('x1', d => timeScale(d.start))
+            .attr('y1', d => d.data ? yScale(d.data.currentTimeMs) : height) // Default to height if data is null
+            .attr('x2', (d, i) => i < timeUpdateMarkers.length - 1 ? timeScale(timeUpdateMarkers[i + 1].start) : timeScale(d.start))
+            .attr('y2', (d, i) => i < timeUpdateMarkers.length - 1 && timeUpdateMarkers[i + 1].data ? yScale(timeUpdateMarkers[i + 1].data.currentTimeMs) : height) // Default to height if data is null
+            .attr('stroke', 'orange')
+            .attr('stroke-width', 2);
+
+        // Movable vertical line
+        verticalLine = svg.append("line")
+            .attr("x1", width / 2)
+            .attr("x2", width / 2)
+            .attr("y1", 0)
+            .attr("y2", height - margin.bottom)
+            .attr("stroke", "red")
+            .attr("stroke-width", 2)
+            .attr("cursor", "pointer");
+
+        // Current time text (initially set to just the timestamp)
+        const initialTimestamp = 0.00; // Set to your desired initial value
+        currentTimeText = svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", height - margin.bottom + 20) // Position it below the x-axis
+            .attr("text-anchor", "middle")
+            .attr("fill", "orange") // Different color to emphasize
+            .attr("font-size", "12px")
+            .text(initialTimestamp.toFixed(2)); // Show only the initial timestamp
+
+        // Set up keyboard navigation for the vertical line
+        setupKeyboardNavigation(verticalLine, markers);
+
+        // Click interaction to move the vertical line
+        svg.on("click", function(event) {
+            const [x] = d3.pointer(event);
+            moveLine(x, groupedMarkers); // Pass groupedMarkers to moveLine
+        });
+    }
 }
 
 // Function to set up keyboard navigation
