@@ -11,7 +11,10 @@ browser.runtime.onMessage.addListener(async function(message, sender, sendRespon
     browser.tabs.create({ url: "/timeline.html" }).then(tab => {
       browser.webNavigation.onCompleted.addListener(function onCompleted(info) {
         if (info.tabId === tab.id && info.frameId === 0) {
-            browser.tabs.sendMessage(tab.id, { action: "loadMarkers", markers: message.data }).catch(console.error);
+            // Separate regularMarkers and groupedMarkers
+            const { regularMarkers, groupedMarkers } = message.data;
+            browser.tabs.sendMessage(tab.id, { action: "loadMarkers", regularMarkers, groupedMarkers })
+              .catch(console.error);
             browser.webNavigation.onCompleted.removeListener(onCompleted);
         }
       });

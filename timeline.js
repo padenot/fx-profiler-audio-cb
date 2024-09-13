@@ -1,7 +1,9 @@
 // Set up listener for incoming data
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((message) => {
     if (message.action === "loadMarkers") {
-        drawTimeline(message.markers);
+        // Temporarily only draw regularMarkers
+        const { regularMarkers } = message; // Destructure regularMarkers
+        drawTimeline(regularMarkers); // Call the function to draw only regularMarkers
     }
 });
 
