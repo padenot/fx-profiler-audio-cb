@@ -104,53 +104,66 @@ function drawGroupMarkers(markers, groupedMarkers) {
         // Filter markers for 'timeupdate'
         const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
 
-        // Draw currentTimeMs and mediaDurationMs
-        timeUpdateMarkers.forEach(marker => {
-            if (marker.data) { // Check if data exists
-                const currentY = yScale(marker.data.currentTimeMs / 1000); // Convert to seconds
-                const durationY = yScale(marker.data.mediaDurationMs / 1000); // Convert to seconds
+        // Draw connection lines for currentTimeMs and mediaDurationMs
+        for (let i = 0; i < timeUpdateMarkers.length - 1; i++) {
+            const currentMarker = timeUpdateMarkers[i];
+            const nextMarker = timeUpdateMarkers[i + 1];
+            if (currentMarker.data && nextMarker.data) { // Check if data exists for both markers
+                const currentY = yScale(currentMarker.data.currentTimeMs / 1000); // Convert to seconds
+                const nextCurrentY = yScale(nextMarker.data.currentTimeMs / 1000); // Convert to seconds
+                const durationY = yScale(currentMarker.data.mediaDurationMs / 1000); // Convert to seconds
+                const nextDurationY = yScale(nextMarker.data.mediaDurationMs / 1000); // Convert to seconds
 
-                // Draw currentTimeMs
-                svg.append('circle')
-                    .attr('cx', timeScale(marker.start))
-                    .attr('cy', currentY)
-                    .attr('r', 5)
-                    .attr('fill', 'orange'); // Different color for currentTimeMs
+                // Draw connection lines for mediaDurationMs with hover effect
+                const durationLine = svg.append('line')
+                    .attr('x1', timeScale(currentMarker.start))
+                    .attr('y1', durationY)
+                    .attr('x2', timeScale(nextMarker.start))
+                    .attr('y2', nextDurationY)
+                    .attr('stroke', 'green')
+                    .attr('stroke-width', 2)
+                    .on('mouseover', function(event) {
+                        const tooltip = svg.append('text')
+                            .attr('x', timeScale(currentMarker.start))
+                            .attr('y', durationY)
+                            .attr('text-anchor', 'middle')
+                            .attr('dominant-baseline', 'middle')
+                            .attr('font-size', '12px')
+                            .attr('fill', 'white')
+                            .attr('background', 'black') // Add background for better contrast
+                            .text(`Duration: ${currentMarker.data.mediaDurationMs / 1000} s`);
 
-                // Draw mediaDurationMs
-                svg.append('circle')
-                    .attr('cx', timeScale(marker.start))
-                    .attr('cy', durationY)
-                    .attr('r', 5)
-                    .attr('fill', 'green'); // Different color for mediaDurationMs
+                        // Clear tooltip on mouseout
+                        d3.select(this).on('mouseout', function() {
+                            tooltip.remove();
+                        });
+                    });
+
+                const currentTimeLine = svg.append('line')
+                    .attr('x1', timeScale(currentMarker.start))
+                    .attr('y1', currentY)
+                    .attr('x2', timeScale(nextMarker.start))
+                    .attr('y2', nextCurrentY)
+                    .attr('stroke', 'orange')
+                    .attr('stroke-width', 2)
+                    .on('mouseover', function(event) {
+                        const tooltip = svg.append('text')
+                            .attr('x', timeScale(currentMarker.start))
+                            .attr('y', currentY)
+                            .attr('text-anchor', 'middle')
+                            .attr('dominant-baseline', 'middle')
+                            .attr('font-size', '12px')
+                            .attr('fill', 'white')
+                            .attr('background', 'black') // Add background for better contrast
+                            .text(`Current Time: ${currentMarker.data.currentTimeMs / 1000} s`);
+
+                        // Clear tooltip on mouseout
+                        d3.select(this).on('mouseout', function() {
+                            tooltip.remove();
+                        });
+                    });
             }
-        });
-
-        // Connect mediaDurationMs with lines
-        svg.selectAll('line.mediaDuration')
-            .data(timeUpdateMarkers)
-            .enter()
-            .append('line')
-            .attr('class', 'mediaDuration')
-            .attr('x1', d => timeScale(d.start))
-            .attr('y1', d => d.data ? yScale(d.data.mediaDurationMs / 1000) : height) // Convert to seconds
-            .attr('x2', (d, i) => i < timeUpdateMarkers.length - 1 ? timeScale(timeUpdateMarkers[i + 1].start) : timeScale(d.start))
-            .attr('y2', (d, i) => i < timeUpdateMarkers.length - 1 && timeUpdateMarkers[i + 1].data ? yScale(timeUpdateMarkers[i + 1].data.mediaDurationMs / 1000) : height) // Convert to seconds
-            .attr('stroke', 'green')
-            .attr('stroke-width', 2);
-
-        // Connect currentTimeMs with lines
-        svg.selectAll('line.currentTime')
-            .data(timeUpdateMarkers)
-            .enter()
-            .append('line')
-            .attr('class', 'currentTime')
-            .attr('x1', d => timeScale(d.start))
-            .attr('y1', d => d.data ? yScale(d.data.currentTimeMs / 1000) : height) // Convert to seconds
-            .attr('x2', (d, i) => i < timeUpdateMarkers.length - 1 ? timeScale(timeUpdateMarkers[i + 1].start) : timeScale(d.start))
-            .attr('y2', (d, i) => i < timeUpdateMarkers.length - 1 && timeUpdateMarkers[i + 1].data ? yScale(timeUpdateMarkers[i + 1].data.currentTimeMs / 1000) : height) // Convert to seconds
-            .attr('stroke', 'orange')
-            .attr('stroke-width', 2);
+        }
 
         // Movable vertical line
         verticalLine = svg.append("line")
