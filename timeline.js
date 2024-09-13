@@ -186,18 +186,18 @@ function drawGroupMarkers(markers, groupedMarkers) {
       .text(initialTimestamp.toFixed(2)); // Show only the initial timestamp
 
     // Set up keyboard navigation for the vertical line
-    setupKeyboardNavigation(verticalLine, markers);
+    setupKeyboardNavigation(verticalLine, markers, yScale); // Pass yScale
 
     // Click interaction to move the vertical line
     svg.on("click", function(event) {
       const [x] = d3.pointer(event);
-      moveLine(x, groupedMarkers); // Pass groupedMarkers to moveLine
+      moveLine(x, groupedMarkers, yScale, svg); // Pass groupedMarkers and yScale to moveLine
     });
   }
 }
 
 // Function to set up keyboard navigation
-function setupKeyboardNavigation(verticalLine, markers) {
+function setupKeyboardNavigation(verticalLine, markers, yScale) { // Pass yScale
   const step = (timeScale.range()[1] - timeScale.range()[0]) / 100; // Defines the step size for each key press
 
   document.addEventListener('keydown', function(event) {
@@ -219,13 +219,13 @@ function setupKeyboardNavigation(verticalLine, markers) {
       currentX = Math.max(timeScale.range()[0], Math.min(currentX, timeScale.range()[1]));
 
       // Move the line
-      moveLine(currentX, markers); // Pass markers to moveLine
+      moveLine(currentX, markers, yScale); // Pass markers and yScale to moveLine
     }
   });
 }
 
 // Function to move the vertical line and update the current time text
-function moveLine(x, groupedMarkers) {
+function moveLine(x, groupedMarkers, yScale, svg) { // Pass svg as an argument
   verticalLine.attr('x1', x).attr('x2', x);
   const currentTime = timeScale.invert(x);
   updateMarkerDetails(currentGroupId, currentTime, groupedMarkers); // Pass groupedMarkers
@@ -233,6 +233,30 @@ function moveLine(x, groupedMarkers) {
   // Update current time text position and value to show only the timestamp
   currentTimeText.attr("x", x)
     .text(currentTime.toFixed(2)); // Show only the timestamp
+
+  // Find the closest marker before the current time
+  const markers = groupedMarkers[currentGroupId] || [];
+  const closestMarker = markers
+    .filter(marker => marker.data && marker.start <= currentTime)
+    .reduce((prev, curr) => (prev.start > curr.start ? prev : curr), markers[0]);
+
+  // If a closest marker is found, display its Y value above the vertical line
+  if (closestMarker) {
+    const closestY = yScale(closestMarker.data.currentTimeMs / 1000); // Convert to seconds
+    svg.selectAll('.closest-marker-text').remove(); // Remove previous text if any
+    svg.append("text")
+      .attr("class", "closest-marker-text")
+      .attr("x", x)
+      .attr("y", closestY - 10) // Position it above the vertical line
+      .attr("text-anchor", "middle")
+      .attr("fill", "white") // Color for visibility
+      .attr("font-size", "12px")
+      .text(`CurrentTime: ${closestMarker.data.currentTimeMs / 1000} s`)
+      .append("tspan")
+      .attr("x", x)
+      .attr("dy", "1.2em")
+      .text(`Duration: ${closestMarker.data.mediaDurationMs / 1000} s`);
+  }
 }
 
 // Function to update marker details (implementation may vary)
