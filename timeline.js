@@ -24,6 +24,7 @@ function drawTabs(groupedMarkers) {
 
     // Create a tab for each group
     Object.keys(groupedMarkers).forEach(id => {
+        const markersCount = groupedMarkers[id].length; // Get the number of markers for the group
         const tab = tabContainer.append("div")
             .attr("class", "tab")
             .text(id) // Display the ID as the tab label
@@ -31,6 +32,11 @@ function drawTabs(groupedMarkers) {
                 currentGroupId = id; // Set the current group ID
                 drawGroupMarkers(groupedMarkers[id], groupedMarkers); // Draw markers for the selected group
             });
+
+        // Display the number of markers under the tab name
+        tab.append("div")
+            .attr("class", "marker-count")
+            .text(`(${markersCount})`);
 
         // Close button for the tab
         tab.append("span")
