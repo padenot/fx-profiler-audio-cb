@@ -1,35 +1,36 @@
-// Set up listener for incoming data
-browser.runtime.onMessage.addListener((message) => {
-  if (message.action === "loadMarkers") {
-    const groupedMarkers = message.groupedMarkers;
-    drawTabs(groupedMarkers); // Draw tabs based on grouped markers
-    const firstGroupId = Object.keys(groupedMarkers)[0];
-    if (firstGroupId) {
-      currentGroupId = firstGroupId;
-      drawGroupMarkers(groupedMarkers[firstGroupId], groupedMarkers);
-    }
-  }
-});
-
+let mediaElementMarkers;
 let currentGroupId = null; // Track the currently selected group
 let verticalLine; // Variable to hold the vertical line element
 let currentTimeText; // Variable to hold the current time text element
 let timeScale; // Define timeScale in a broader scope
 
+// Set up listener for incoming data
+browser.runtime.onMessage.addListener((message) => {
+  if (message.action === "loadMarkers") {
+    mediaElementMarkers = message.groupedMarkers;
+    drawTabs(); // Draw tabs based on grouped markers
+    const firstGroupId = Object.keys(mediaElementMarkers)[0];
+    if (firstGroupId) {
+      currentGroupId = firstGroupId;
+      drawGroupMarkers(mediaElementMarkers[firstGroupId]);
+    }
+  }
+});
+
 // Function to draw tabs
-function drawTabs(groupedMarkers) {
+function drawTabs() {
   const tabContainer = d3.select("#tab-container");
   tabContainer.selectAll("*").remove(); // Clear existing tabs
 
   // Create a tab for each group
-  Object.keys(groupedMarkers).forEach(id => {
-    const markersCount = groupedMarkers[id].length; // Get the number of markers for the group
+  Object.keys(mediaElementMarkers).forEach(id => {
+    const markersCount = mediaElementMarkers[id].length; // Get the number of markers for the group
     const tab = tabContainer.append("div")
       .attr("class", "tab")
       .text(id) // Display the ID as the tab label
       .on("click", () => {
         currentGroupId = id; // Set the current group ID
-        drawGroupMarkers(groupedMarkers[id], groupedMarkers); // Draw markers for the selected group
+        drawGroupMarkers(mediaElementMarkers[id]); // Draw markers for the selected group
       });
 
     // Display the number of markers under the tab name
@@ -44,13 +45,12 @@ function drawTabs(groupedMarkers) {
       .on("click", (event) => {
         event.stopPropagation(); // Prevent tab click event
         tab.remove(); // Remove the tab
-        delete groupedMarkers[id]; // Optionally remove from groupedMarkers
       });
   });
 }
 
 // Function to draw markers for the selected group
-function drawGroupMarkers(markers, groupedMarkers) {
+function drawGroupMarkers(markers) {
   const svg = d3.select('#group-timeline');
   const container = document.getElementById('timeline-container');
   const width = container.clientWidth;
@@ -104,7 +104,7 @@ function drawGroupMarkers(markers, groupedMarkers) {
     });
 
     // Movable vertical line and current time text
-    setupVerticalLine(svg, width, height, margin, markers, yScale, groupedMarkers);
+    setupVerticalLine(svg, width, height, margin, markers, yScale);
   }
 }
 
@@ -151,7 +151,7 @@ function showTooltip(svg, marker, y, label, value) {
 }
 
 // New helper function to set up the vertical line and current time text
-function setupVerticalLine(svg, width, height, margin, markers, yScale, groupedMarkers) {
+function setupVerticalLine(svg, width, height, margin, markers, yScale) {
   verticalLine = svg.append("line")
     .attr("x1", width / 2)
     .attr("x2", width / 2)
@@ -173,14 +173,14 @@ function setupVerticalLine(svg, width, height, margin, markers, yScale, groupedM
   setupKeyboardNavigation(verticalLine, markers, yScale);
   svg.on("click", function(event) {
     const [x] = d3.pointer(event);
-    moveLine(x, groupedMarkers, yScale, svg);
+    moveLine(x, yScale, svg);
   });
 
   const drag = d3.drag()
     .on("start", function(event) { d3.select(this).raise(); })
     .on("drag", function(event) {
       const x = d3.pointer(event)[0];
-      moveLine(x, groupedMarkers, yScale, svg);
+      moveLine(x, yScale, svg);
     });
 
   verticalLine.call(drag);
@@ -210,15 +210,15 @@ function setupKeyboardNavigation(verticalLine, markers, yScale) {
 }
 
 // Function to move the vertical line and update the current time text
-function moveLine(x, groupedMarkers, yScale, svg) {
+function moveLine(x, yScale, svg) {
   verticalLine.attr('x1', x).attr('x2', x);
   const currentTime = timeScale.invert(x);
-  updateMarkerDetails(currentGroupId, currentTime, groupedMarkers);
+  updateMarkerDetails(currentGroupId, currentTime);
 
   currentTimeText.attr("x", x)
     .text(currentTime.toFixed(2));
 
-  const markers = groupedMarkers[currentGroupId] || [];
+  const markers = mediaElementMarkers[currentGroupId] || [];
   const closestMarker = markers
     .filter(marker => marker.data && marker.start <= currentTime)
     .reduce((prev, curr) => (prev.start > curr.start ? prev : curr), markers[0]);
@@ -242,9 +242,9 @@ function moveLine(x, groupedMarkers, yScale, svg) {
 }
 
 // Function to update marker details (implementation may vary)
-function updateMarkerDetails(groupId, currentTime, groupedMarkers) {
+function updateMarkerDetails(groupId, currentTime) {
   const range = 3;
-  const markers = groupedMarkers[groupId] || [];
+  const markers = mediaElementMarkers[groupId] || [];
   const filteredMarkers = markers.filter(marker =>
     marker.start >= (currentTime - range) && marker.start <= (currentTime + range)
   );
