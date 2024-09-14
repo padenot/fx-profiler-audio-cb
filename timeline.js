@@ -62,17 +62,23 @@ function drawGroupMarkers(markers) {
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('preserveAspectRatio', 'xMinYMin meet');
 
+  svg.width = width; // Add width as a member variable
+  svg.height = height; // Add height as a member variable
+
+  // Calculate maxYValue and store it as a member variable
+  svg.maxYValue = d3.max(markers, d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0) / 1000;
+
+  // Create yScale and store it as a member variable
+  svg.yScale = d3.scaleLinear()
+    .domain([0, svg.maxYValue > 0 ? svg.maxYValue : 1])
+    .range([svg.height - margin.bottom, margin.top]); // Use svg.height
+
   svg.selectAll('*').remove();
 
   // Set up scales
   timeScale = d3.scaleLinear()
     .domain([0, d3.max(markers, d => d.start)])
     .range([margin.left, width - margin.right]);
-
-  const maxYValue = d3.max(markers, d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0) / 1000;
-  const yScale = d3.scaleLinear()
-    .domain([0, maxYValue > 0 ? maxYValue : 1])
-    .range([height - margin.bottom, margin.top]);
 
   // Draw axes
   svg.append("g").attr("class", "x-axis")
@@ -81,7 +87,7 @@ function drawGroupMarkers(markers) {
 
   svg.append("g").attr("class", "y-axis")
     .attr("transform", `translate(${margin.left}, 0)`)
-    .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => d + ' s'));
+    .call(d3.axisLeft(svg.yScale).ticks(5).tickFormat(d => d + ' s'));
 
   // Draw markers and lines
   if (markers.length > 0) {
@@ -99,22 +105,22 @@ function drawGroupMarkers(markers) {
       if (i < timeUpdateMarkers.length - 1) {
         const nextMarker = timeUpdateMarkers[i + 1];
         if (currentMarker.data && nextMarker.data) {
-          drawConnectionLines(currentMarker, nextMarker, yScale);
+          drawConnectionLines(currentMarker, nextMarker);
         }
       }
     });
 
     // Movable vertical line and current time text
-    setupVerticalLine(width, height, margin, markers, yScale);
+    setupVerticalLine(width, height, margin, markers);
   }
 }
 
 // New helper function to draw connection lines
-function drawConnectionLines(currentMarker, nextMarker, yScale) {
-  const currentY = yScale(currentMarker.data.currentTimeMs / 1000);
-  const nextCurrentY = yScale(nextMarker.data.currentTimeMs / 1000);
-  const durationY = yScale(currentMarker.data.mediaDurationMs / 1000);
-  const nextDurationY = yScale(nextMarker.data.mediaDurationMs / 1000);
+function drawConnectionLines(currentMarker, nextMarker) {
+  const currentY = svg.yScale(currentMarker.data.currentTimeMs / 1000);
+  const nextCurrentY = svg.yScale(nextMarker.data.currentTimeMs / 1000);
+  const durationY = svg.yScale(currentMarker.data.mediaDurationMs / 1000);
+  const nextDurationY = svg.yScale(nextMarker.data.mediaDurationMs / 1000);
 
   svg.append('line')
     .attr('x1', timeScale(currentMarker.start))
@@ -152,7 +158,7 @@ function showTooltip(marker, y, label, value) {
 }
 
 // New helper function to set up the vertical line and current time text
-function setupVerticalLine(width, height, margin, markers, yScale) {
+function setupVerticalLine(width, height, margin, markers) {
   verticalLine = svg.append("line")
     .attr("x1", width / 2)
     .attr("x2", width / 2)
@@ -171,24 +177,24 @@ function setupVerticalLine(width, height, margin, markers, yScale) {
     .attr("font-size", "12px")
     .text(initialTimestamp.toFixed(2));
 
-  setupKeyboardNavigation(verticalLine, markers, yScale);
+  setupKeyboardNavigation(verticalLine, markers);
   svg.on("click", function(event) {
     const [x] = d3.pointer(event);
-    moveLine(x, yScale);
+    moveLine(x);
   });
 
   const drag = d3.drag()
     .on("start", function(event) { d3.select(this).raise(); })
     .on("drag", function(event) {
       const x = d3.pointer(event)[0];
-      moveLine(x, yScale);
+      moveLine(x);
     });
 
   verticalLine.call(drag);
 }
 
 // Function to set up keyboard navigation
-function setupKeyboardNavigation(verticalLine, markers, yScale) {
+function setupKeyboardNavigation(verticalLine, markers) {
   const step = (timeScale.range()[1] - timeScale.range()[0]) / 100;
 
   document.addEventListener('keydown', function(event) {
@@ -205,13 +211,13 @@ function setupKeyboardNavigation(verticalLine, markers, yScale) {
 
       currentX = Math.max(timeScale.range()[0], Math.min(currentX, timeScale.range()[1]));
 
-      moveLine(currentX, yScale);
+      moveLine(currentX);
     }
   });
 }
 
 // Function to move the vertical line and update the current time text
-function moveLine(x, yScale) {
+function moveLine(x) {
   verticalLine.attr('x1', x).attr('x2', x);
   const currentTime = timeScale.invert(x);
   updateMarkerDetails(currentGroupId, currentTime);
@@ -225,7 +231,7 @@ function moveLine(x, yScale) {
     .reduce((prev, curr) => (prev.start > curr.start ? prev : curr), markers[0]);
 
   if (closestMarker) {
-    const closestY = yScale(closestMarker.data.currentTimeMs / 1000);
+    const closestY = svg.yScale(closestMarker.data.currentTimeMs / 1000);
     svg.selectAll('.closest-marker-text').remove();
     svg.append("text")
       .attr("class", "closest-marker-text")
