@@ -252,25 +252,61 @@ function moveLine(x) {
     .text(currentTime.toFixed(2));
 
   const markers = mediaElementMarkers[currentGroupId] || [];
-  const closestMarker = markers
-    .filter(marker => marker.data && marker.start <= currentTime)
+  const closestTimeupdate = markers
+    .filter(marker => marker.data && marker.start <= currentTime && marker.name === 'timeupdate')
+    .reduce((prev, curr) => (prev.start > curr.start ? prev : curr), markers[0]);
+  const closestProgress = markers
+    .filter(marker => marker.data && marker.start <= currentTime && marker.name === 'progress')
     .reduce((prev, curr) => (prev.start > curr.start ? prev : curr), markers[0]);
 
-  if (closestMarker) {
-    const closestY = svg.yScale(closestMarker.data.currentTimeMs / 1000);
-    svg.selectAll('.closest-marker-text').remove();
+  if (closestProgress || closestTimeupdate) {
+    svg.selectAll('.closest-text').remove(); // Remove previous text elements
+
+    const bufferStartText = closestProgress ? `Buffer Start:` : '';
+    const bufferEndText = closestProgress ? `Buffer End:` : '';
+    const currentTimeText = closestTimeupdate ? `CurrentTime:` : '';
+    const durationText = closestTimeupdate ? `Duration:` : '';
+
+    const bufferStartValue = closestProgress ? `${closestProgress.data.bufferStartMs / 1000} s` : '';
+    const bufferEndValue = closestProgress ? `${closestProgress.data.bufferEndMs / 1000} s` : '';
+    const currentTimeValue = closestTimeupdate ? `${closestTimeupdate.data.currentTimeMs / 1000} s` : '';
+    const durationValue = closestTimeupdate ? `${closestTimeupdate.data.mediaDurationMs / 1000} s` : '';
+
+    const textX = x; // Base x position for the labels
+    const valueXOffset = 100; // Adjust this value to align the YYYs
+
     svg.append("text")
-      .attr("class", "closest-marker-text")
-      .attr("x", x)
-      .attr("y", closestY - 10)
-      .attr("text-anchor", "middle")
+      .attr("class", "closest-text")
+      .attr("x", textX)
+      .attr("y", svg.maxYValue)
+      .attr("text-anchor", "start")
       .attr("fill", "white")
-      .attr("font-size", "12px")
-      .text(`CurrentTime: ${closestMarker.data.currentTimeMs / 1000} s`)
+      .attr("font-size", "13px")
+      .text(bufferStartText)
       .append("tspan")
-      .attr("x", x)
-      .attr("dy", "1.2em")
-      .text(`Duration: ${closestMarker.data.mediaDurationMs / 1000} s`);
+      .attr("x", valueXOffset + textX)
+      .text(bufferStartValue)
+      .append("tspan")
+      .attr("x", textX)
+      .attr("dy", "0.9em")
+      .text(bufferEndText)
+      .append("tspan")
+      .attr("x", valueXOffset + textX)
+      .text(bufferEndValue)
+      .append("tspan")
+      .attr("x", textX)
+      .attr("dy", "0.9em")
+      .text(currentTimeText)
+      .append("tspan")
+      .attr("x", valueXOffset + textX)
+      .text(currentTimeValue)
+      .append("tspan")
+      .attr("x", textX)
+      .attr("dy", "0.9em")
+      .text(durationText)
+      .append("tspan")
+      .attr("x", valueXOffset + textX)
+      .text(durationValue);
   }
 }
 
