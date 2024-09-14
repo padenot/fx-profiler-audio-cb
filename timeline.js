@@ -273,38 +273,3 @@ function updateMarkerDetails(groupId, currentTime) {
 
   markerDetailsContainer.appendChild(table);
 }
-
-// Assuming you have a function that initializes the timeline
-function initializeTimeline() {
-  const container = d3.select("#timeline-container");
-  const width = container.node().getBoundingClientRect().width;
-  const height = container.node().getBoundingClientRect().height;
-  const margin = { top: 10, right: 20, bottom: 40, left: 40 };
-  const chartWidth = width - margin.left - margin.right;
-  const chartHeight = height - margin.top - margin.bottom;
-
-  const svg = d3.select("#timeline")
-    .attr("width", width)
-    .attr("height", height);
-
-  svg.selectAll("*").remove();
-
-  const chart = svg.append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
-
-  const x = d3.scaleLinear()
-    .range([0, chartWidth]);
-
-  const xAxis = d3.axisBottom(x);
-
-  chart.append("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0,${chartHeight})`)
-    .call(xAxis);
-
-  svg.selectAll(".x-axis text")
-    .attr("dy", "1em");
-}
-
-window.addEventListener('load', initializeTimeline);
-window.addEventListener('resize', initializeTimeline);
