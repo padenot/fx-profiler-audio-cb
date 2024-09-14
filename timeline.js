@@ -1,4 +1,4 @@
-let mediaElementMarkers;
+let groupedMarkers;
 let currentGroupId = null; // Track the currently selected group
 let verticalLine; // Variable to hold the vertical line element
 let currentTimeText; // Variable to hold the current time text element
@@ -7,10 +7,10 @@ let svg; // Used to draw timeline
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "loadMarkers") {
-    mediaElementMarkers = message.groupedMarkers;
+    groupedMarkers = message.groupedMarkers;
     let maxMarkersCount = 0;
-    Object.keys(mediaElementMarkers).forEach(id => {
-      const markersCount = mediaElementMarkers[id].length;
+    Object.keys(groupedMarkers).forEach(id => {
+      const markersCount = groupedMarkers[id].length;
       if (markersCount > maxMarkersCount) {
         maxMarkersCount = markersCount;
         currentGroupId = id;
@@ -18,7 +18,7 @@ browser.runtime.onMessage.addListener((message) => {
     });
     drawTabs();
     if (currentGroupId) {
-      drawGroupMarkers(mediaElementMarkers[currentGroupId]);
+      drawGroupMarkers(groupedMarkers[currentGroupId]);
       // Ensure the default tab is selected
       d3.select(`#tab-container .tab:has-text('${currentGroupId}')`).classed('selected', true);
     }
@@ -30,8 +30,8 @@ function drawTabs() {
   tabContainer.selectAll("*").remove(); // Clear existing tabs
 
   // Create a tab for each group
-  Object.keys(mediaElementMarkers).forEach(id => {
-    const markersCount = mediaElementMarkers[id].length;
+  Object.keys(groupedMarkers).forEach(id => {
+    const markersCount = groupedMarkers[id].length;
     const tab = tabContainer.append("div")
       .attr("class", "tab")
       .text(id) // Display the ID as the tab label
@@ -39,7 +39,7 @@ function drawTabs() {
         tabContainer.selectAll('.tab').classed('selected', false);
         tab.classed('selected', true);
         currentGroupId = id;
-        drawGroupMarkers(mediaElementMarkers[id]);
+        drawGroupMarkers(groupedMarkers[id]);
       });
 
     // Display the number of markers under the tab name
@@ -251,7 +251,7 @@ function moveLine(x) {
   currentTimeText.attr("x", x)
     .text(currentTime.toFixed(2));
 
-  const markers = mediaElementMarkers[currentGroupId] || [];
+  const markers = groupedMarkers[currentGroupId] || [];
   const closestTimeupdate = markers
     .filter(marker => marker.data && marker.start <= currentTime && marker.name === 'timeupdate')
     .reduce((prev, curr) => (prev.start > curr.start ? prev : curr), markers[0]);
@@ -312,7 +312,7 @@ function moveLine(x) {
 
 function updateMarkerDetails(groupId, currentTime) {
   const range = 3;
-  const markers = mediaElementMarkers[groupId] || [];
+  const markers = groupedMarkers[groupId] || [];
   const filteredMarkers = markers.filter(marker =>
     marker.start >= (currentTime - range) && marker.start <= (currentTime + range)
   );
