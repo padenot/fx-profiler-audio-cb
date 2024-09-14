@@ -8,11 +8,19 @@ let svg; // Used to draw timeline
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "loadMarkers") {
     mediaElementMarkers = message.groupedMarkers;
-    drawTabs(); // Draw tabs based on grouped markers
-    const firstGroupId = Object.keys(mediaElementMarkers)[0];
-    if (firstGroupId) {
-      currentGroupId = firstGroupId;
-      drawGroupMarkers(mediaElementMarkers[firstGroupId]);
+    let maxMarkersCount = 0;
+    Object.keys(mediaElementMarkers).forEach(id => {
+      const markersCount = mediaElementMarkers[id].length;
+      if (markersCount > maxMarkersCount) {
+        maxMarkersCount = markersCount;
+        currentGroupId = id;
+      }
+    });
+    drawTabs();
+    if (currentGroupId) {
+      drawGroupMarkers(mediaElementMarkers[currentGroupId]);
+      // Ensure the default tab is selected
+      d3.select(`#tab-container .tab:has-text('${currentGroupId}')`).classed('selected', true);
     }
   }
 });
@@ -23,13 +31,15 @@ function drawTabs() {
 
   // Create a tab for each group
   Object.keys(mediaElementMarkers).forEach(id => {
-    const markersCount = mediaElementMarkers[id].length; // Get the number of markers for the group
+    const markersCount = mediaElementMarkers[id].length;
     const tab = tabContainer.append("div")
       .attr("class", "tab")
       .text(id) // Display the ID as the tab label
       .on("click", () => {
-        currentGroupId = id; // Set the current group ID
-        drawGroupMarkers(mediaElementMarkers[id]); // Draw markers for the selected group
+        tabContainer.selectAll('.tab').classed('selected', false);
+        tab.classed('selected', true);
+        currentGroupId = id;
+        drawGroupMarkers(mediaElementMarkers[id]);
       });
 
     // Display the number of markers under the tab name
@@ -45,6 +55,10 @@ function drawTabs() {
         event.stopPropagation(); // Prevent tab click event
         tab.remove(); // Remove the tab
       });
+
+    if (id == currentGroupId) {
+      tab.classed('selected', true);
+    }
   });
 }
 

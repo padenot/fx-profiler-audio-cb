@@ -227,3 +227,9 @@ body {
     background-color: #444; /* Header background */
     color: white; /* Header text color */
 }
+
+.tab.selected {
+    background-color: #007bff; /* Change to your desired color */
+    color: white; /* Change text color for contrast */
+    font-weight: bold; /* Optional: make the text bold */
+}
