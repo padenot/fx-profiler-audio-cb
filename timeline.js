@@ -5,7 +5,6 @@ let currentTimeText; // Variable to hold the current time text element
 let timeScale; // Define timeScale in a broader scope
 let svg; // Used to draw timeline
 
-// Set up listener for incoming data
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "loadMarkers") {
     mediaElementMarkers = message.groupedMarkers;
@@ -18,7 +17,6 @@ browser.runtime.onMessage.addListener((message) => {
   }
 });
 
-// Function to draw tabs
 function drawTabs() {
   const tabContainer = d3.select("#tab-container");
   tabContainer.selectAll("*").remove(); // Clear existing tabs
@@ -61,18 +59,12 @@ function drawGroupMarkers(markers) {
   svg.attr('width', width).attr('height', height)
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('preserveAspectRatio', 'xMinYMin meet');
-
-  svg.width = width; // Add width as a member variable
-  svg.height = height; // Add height as a member variable
-
-  // Calculate maxYValue and store it as a member variable
+  svg.width = width;
+  svg.height = height;
   svg.maxYValue = d3.max(markers, d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0) / 1000;
-
-  // Create yScale and store it as a member variable
   svg.yScale = d3.scaleLinear()
     .domain([0, svg.maxYValue > 0 ? svg.maxYValue : 1])
-    .range([svg.height - margin.bottom, margin.top]); // Use svg.height
-
+    .range([svg.height - margin.bottom, margin.top]);
   svg.selectAll('*').remove();
 
   // Set up scales
@@ -115,7 +107,6 @@ function drawGroupMarkers(markers) {
   }
 }
 
-// New helper function to draw connection lines
 function drawConnectionLines(currentMarker, nextMarker) {
   const currentY = svg.yScale(currentMarker.data.currentTimeMs / 1000);
   const nextCurrentY = svg.yScale(nextMarker.data.currentTimeMs / 1000);
@@ -141,7 +132,6 @@ function drawConnectionLines(currentMarker, nextMarker) {
     .on('mouseover', function(event) { showTooltip(currentMarker, currentY, 'Current Time', currentMarker.data.currentTimeMs); });
 }
 
-// New helper function to show tooltips
 function showTooltip(marker, y, label, value) {
   const tooltip = svg.append('text')
     .attr('x', timeScale(marker.start))
@@ -157,7 +147,6 @@ function showTooltip(marker, y, label, value) {
   });
 }
 
-// New helper function to set up the vertical line and current time text
 function setupVerticalLine(width, height, margin, markers) {
   verticalLine = svg.append("line")
     .attr("x1", width / 2)
@@ -193,7 +182,6 @@ function setupVerticalLine(width, height, margin, markers) {
   verticalLine.call(drag);
 }
 
-// Function to set up keyboard navigation
 function setupKeyboardNavigation(verticalLine, markers) {
   const step = (timeScale.range()[1] - timeScale.range()[0]) / 100;
 
@@ -248,7 +236,6 @@ function moveLine(x) {
   }
 }
 
-// Function to update marker details (implementation may vary)
 function updateMarkerDetails(groupId, currentTime) {
   const range = 3;
   const markers = mediaElementMarkers[groupId] || [];
