@@ -106,6 +106,8 @@ function drawGroupMarkers(markers) {
       .attr('r', 5)
       .attr('fill', 'blue');
 
+    drawProgressMarkers(markers);
+
     const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
     timeUpdateMarkers.forEach((currentMarker, i) => {
       if (i < timeUpdateMarkers.length - 1) {
@@ -119,6 +121,28 @@ function drawGroupMarkers(markers) {
     // Movable vertical line and current time text
     setupVerticalLine(width, height, margin, markers);
   }
+}
+
+function drawProgressMarkers(markers) {
+  const progressMarkers = markers.filter(marker => marker.name === 'progress');
+  console.log(progressMarkers); // Check if there are any progress markers
+
+  progressMarkers.forEach((currentMarker, i) => {
+    const nextMarker = progressMarkers[i + 1] ? progressMarkers[i + 1] : null;
+    // SVG's y-axis is decreasing when going up
+    const startY = svg.yScale(currentMarker.data.bufferStartMs / 1000);
+    const endY = svg.yScale(currentMarker.data.bufferEndMs / 1000);
+
+    const lineHeight = Math.abs(endY - startY); // Calculate the height based on connection lines
+
+    svg.append('rect')
+      .attr('x', timeScale(currentMarker.start))
+      .attr('y', Math.min(startY, endY)) // Align the bottom of the rectangle with the x-axis
+      .attr('width', nextMarker ? timeScale(nextMarker.start) - timeScale(currentMarker.start) : svg.width - timeScale(currentMarker.start))
+      .attr('height', lineHeight) // Set height to match connection lines
+      .attr('fill', 'whitesmoke')
+      .attr('fill-opacity', 0.3);
+  });
 }
 
 function drawConnectionLines(currentMarker, nextMarker) {
