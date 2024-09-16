@@ -264,8 +264,6 @@ function setupVerticalLine(width, height, margin, markers) {
     const [x] = d3.pointer(event);
     moveLine(x);
   });
-
-  verticalLine.call(drag);
 }
 
 function setupKeyboardNavigation(verticalLine, markers) {
@@ -318,13 +316,13 @@ function moveLine(x) {
     const currentTimeText = closestTimeupdate ? `CurrentTime:` : '';
     const durationText = closestTimeupdate ? `Duration:` : '';
 
-    const bufferStartValue = closestProgress ? `${closestProgress.data.bufferStartMs / 1000} s` : '';
-    const bufferEndValue = closestProgress ? `${closestProgress.data.bufferEndMs / 1000} s` : '';
-    const currentTimeValue = closestTimeupdate ? `${closestTimeupdate.data.currentTimeMs / 1000} s` : '';
-    const durationValue = closestTimeupdate ? `${closestTimeupdate.data.mediaDurationMs / 1000} s` : '';
+    const bufferStartValue = closestProgress && closestProgress.data ? `${closestProgress.data.bufferStartMs / 1000} s` : '';
+    const bufferEndValue = closestProgress && closestProgress.data ? `${closestProgress.data.bufferEndMs / 1000} s` : '';
+    const currentTimeValue = closestTimeupdate && closestTimeupdate.data ? `${closestTimeupdate.data.currentTimeMs / 1000} s` : '';
+    const durationValue = closestTimeupdate && closestTimeupdate.data ? `${closestTimeupdate.data.mediaDurationMs / 1000} s` : '';
 
     const resolutionText = closestResolution ? `Resolution:` : '';
-    const resolutionValue = closestResolution ? `${closestResolution.data.width}x${closestResolution.data.height}` : '';
+    const resolutionValue = closestResolution && closestResolution.data ? `${closestResolution.data.width}x${closestResolution.data.height}` : '';
 
     const textX = x; // Base x position for the labels
     const valueXOffset = 100; // Adjust this value to align the YYYs
@@ -410,8 +408,6 @@ function updateMarkerDetails(groupId, currentTime) {
     `;
     table.appendChild(row);
   });
-
-  console.log(filteredMarkers);
 
   markerDetailsContainer.appendChild(table);
 }
