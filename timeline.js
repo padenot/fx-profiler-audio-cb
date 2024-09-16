@@ -258,8 +258,11 @@ function moveLine(x) {
   const closestProgress = markers
     .filter(marker => marker.data && marker.start <= currentTime && marker.name === 'progress')
     .reduce((prev, curr) => (prev.start > curr.start ? prev : curr), markers[0]);
+  const closestResolution = markers
+    .filter(marker => marker.name === 'resize' && marker.data && marker.start <= currentTime)
+    .reduce((prev, curr) => (prev ? (prev.start > curr.start ? prev : curr) : curr), null);
 
-  if (closestProgress || closestTimeupdate) {
+  if (closestProgress || closestTimeupdate || closestResolution) {
     svg.selectAll('.closest-text').remove(); // Remove previous text elements
 
     const bufferStartText = closestProgress ? `Buffer Start:` : '';
@@ -271,6 +274,9 @@ function moveLine(x) {
     const bufferEndValue = closestProgress ? `${closestProgress.data.bufferEndMs / 1000} s` : '';
     const currentTimeValue = closestTimeupdate ? `${closestTimeupdate.data.currentTimeMs / 1000} s` : '';
     const durationValue = closestTimeupdate ? `${closestTimeupdate.data.mediaDurationMs / 1000} s` : '';
+
+    const resolutionText = closestResolution ? `Resolution:` : '';
+    const resolutionValue = closestResolution ? `${closestResolution.data.width}x${closestResolution.data.height}` : '';
 
     const textX = x; // Base x position for the labels
     const valueXOffset = 100; // Adjust this value to align the YYYs
@@ -306,7 +312,14 @@ function moveLine(x) {
       .text(durationText)
       .append("tspan")
       .attr("x", valueXOffset + textX)
-      .text(durationValue);
+      .text(durationValue)
+      .append("tspan")
+      .attr("x", textX)
+      .attr("dy", "0.9em")
+      .text(resolutionText)
+      .append("tspan")
+      .attr("x", valueXOffset + textX)
+      .text(resolutionValue)
   }
 }
 
