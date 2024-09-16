@@ -109,18 +109,23 @@ function drawGroupMarkers(markers) {
     const resizeMarkers = markers.filter(marker => marker.name === 'resize');
     const resizeColorMap = {};
 
-    resizeMarkers.forEach(marker => {
-      if (!resizeColorMap[marker.data.width]) {
-        resizeColorMap[marker.data.width] = getUniqueColor();
+    resizeMarkers.forEach((marker, index) => {
+      console.log(`${marker.start} ${marker.data.width} ${marker.data.height}`);
+      const description = `${marker.data.width}x${marker.data.height}`;
+      if (!resizeColorMap[description]) {
+        resizeColorMap[description] = {
+          color: getUniqueColor(),
+          description: description
+        };
       }
-      resizeColors[marker.start] = resizeColorMap[marker.data.width];
+      resizeColors[marker.start] = resizeColorMap[description];
     });
 
     // Apply colors to timeupdate markers based on resize markers
     const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
     timeUpdateMarkers.forEach((currentMarker, i) => {
       const currentColor = Object.keys(resizeColors).reduce((color, start) => {
-        return (currentMarker.start > start) ? resizeColors[start] : color;
+        return (currentMarker.start > start) ? resizeColors[start].color : color;
       }, null);
 
       // Draw timeupdate markers with the assigned color
@@ -143,7 +148,36 @@ function drawGroupMarkers(markers) {
 
     // Movable vertical line and current time text
     setupVerticalLine(width, height, margin, markers);
+
+    // Create or update the resolution legend
+    updateResolutionLegend(resizeColorMap);
   }
+}
+
+function updateResolutionLegend(colorMap) {
+  const legendContainer = d3.select("#resolution-legend");
+  legendContainer.selectAll("*").remove(); // Clear existing legend items
+
+  Object.keys(colorMap).forEach((resolution, index) => { // Added index for positioning
+    const color = colorMap[resolution].color;
+    const description = colorMap[resolution].description;
+
+    const legendItem = legendContainer.append("div")
+      .style("display", "flex") // Use flexbox for horizontal alignment
+      .style("align-items", "center") // Center items vertically
+      .style("margin", "0 20px") // Increased margin for better spacing
+      .attr("title", resolution)
+      .attr("id", `legend-item-${index}`)
+
+    legendItem.append("div")
+      .style("background-color", color)
+      .style("width", "20px")
+      .style("height", "20px")
+      .style("margin-right", "5px"); // Space between color rect and description
+
+    legendItem.append("div")
+      .text(`${description}`);
+  });
 }
 
 function drawProgressMarkers(markers) {
