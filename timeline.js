@@ -100,9 +100,9 @@ function drawGroupMarkers(markers) {
     .attr("transform", `translate(0, ${height - margin.bottom})`)
     .call(d3.axisBottom(timeScale).ticks(10));
 
-  svg.append("g").attr("class", "y-axis")
-    .attr("transform", `translate(${margin.left}, 0)`)
-    .call(d3.axisLeft(svg.yScale).ticks(5).tickFormat(d => d + ' s'));
+  // svg.append("g").attr("class", "y-axis")
+  //   .attr("transform", `translate(${margin.left}, 0)`)
+  //   .call(d3.axisLeft(svg.yScale).ticks(5).tickFormat(d => d + ' s'));
 
   // Draw markers and lines
   if (markers.length > 0) {
