@@ -377,6 +377,17 @@ function moveLine(x) {
   }
 }
 
+function getMarkerDetails(marker) {
+  if (marker.name === 'timeupdate') {
+    return marker.data ? `currentTime : ${marker.data.currentTimeMs} ms, duration : ${marker.data.mediaDurationMs} ms` : '';
+  } else if (marker.name === 'progress') {
+    return `bufferStart : ${marker.data.bufferStartMs} ms, bufferEnd : ${marker.data.bufferEndMs} ms`;
+  } else if (marker.name === 'resize') {
+    return `${marker.data.width}x${marker.data.height}`;
+  }
+  return '';
+}
+
 function updateMarkerDetails(groupId, currentTime) {
   const range = 3;
   const markers = groupedMarkers[groupId] || [];
@@ -390,8 +401,8 @@ function updateMarkerDetails(groupId, currentTime) {
   const table = document.createElement("table");
   const headerRow = document.createElement("tr");
   headerRow.innerHTML = `
-    <th>Module</th>
     <th>Name</th>
+    <th>Details</th>
     <th>Timestamp</th>
   `;
   table.appendChild(headerRow);
@@ -400,11 +411,13 @@ function updateMarkerDetails(groupId, currentTime) {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${marker.name}</td>
-      <td>${marker.data ? marker.data.name : ''}</td>
+      <td>${getMarkerDetails(marker)}</td>
       <td>${marker.start.toFixed(2)}</td>
     `;
     table.appendChild(row);
   });
+
+  console.log(filteredMarkers);
 
   markerDetailsContainer.appendChild(table);
 }
