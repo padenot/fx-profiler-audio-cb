@@ -48,6 +48,7 @@ function drawTabs() {
         tab.classed('selected', true);
         currentGroupId = id;
         drawGroupMarkers(groupedMarkers[id]);
+        updateMarkerDetails(id, 0);
       });
 
     // Display the number of markers under the tab name
