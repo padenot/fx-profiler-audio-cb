@@ -260,23 +260,16 @@ function setupVerticalLine(width, height, margin, markers) {
     .text(initialTimestamp.toFixed(2));
 
   setupKeyboardNavigation(verticalLine, markers);
-  svg.on("click", function(event) {
+  svg.on("mousemove", function(event) {
     const [x] = d3.pointer(event);
     moveLine(x);
   });
-
-  const drag = d3.drag()
-    .on("start", function(event) { d3.select(this).raise(); })
-    .on("drag", function(event) {
-      const x = d3.pointer(event)[0];
-      moveLine(x);
-    });
 
   verticalLine.call(drag);
 }
 
 function setupKeyboardNavigation(verticalLine, markers) {
-  const step = (timeScale.range()[1] - timeScale.range()[0]) / 100;
+  const step = (timeScale.range()[1] - timeScale.range()[0]) / 500;
 
   document.addEventListener('keydown', function(event) {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
