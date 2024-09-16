@@ -110,7 +110,6 @@ function drawGroupMarkers(markers) {
     const resizeColorMap = {};
 
     resizeMarkers.forEach((marker, index) => {
-      console.log(`${marker.start} ${marker.data.width} ${marker.data.height}`);
       const description = `${marker.data.width}x${marker.data.height}`;
       if (!resizeColorMap[description]) {
         resizeColorMap[description] = {
@@ -182,8 +181,6 @@ function updateResolutionLegend(colorMap) {
 
 function drawProgressMarkers(markers) {
   const progressMarkers = markers.filter(marker => marker.name === 'progress');
-  console.log(progressMarkers); // Check if there are any progress markers
-
   progressMarkers.forEach((currentMarker, i) => {
     const nextMarker = progressMarkers[i + 1] ? progressMarkers[i + 1] : null;
     // SVG's y-axis is decreasing when going up
