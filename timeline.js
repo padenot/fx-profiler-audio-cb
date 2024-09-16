@@ -4,6 +4,14 @@ let verticalLine; // Variable to hold the vertical line element
 let currentTimeText; // Variable to hold the current time text element
 let timeScale; // Define timeScale in a broader scope
 let svg; // Used to draw timeline
+let resizeColors = {}; // Object to store colors for each width
+let colorIndex = 0; // Index to assign unique colors
+
+// Function to generate a unique color
+function getUniqueColor() {
+  const colors = ['red', 'blue', 'yellow', 'orange', 'purple', 'cyan', 'magenta'];
+  return colors[colorIndex++ % colors.length];
+}
 
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "loadMarkers") {
@@ -97,18 +105,33 @@ function drawGroupMarkers(markers) {
 
   // Draw markers and lines
   if (markers.length > 0) {
-    svg.selectAll('circle')
-      .data(markers)
-      .enter()
-      .append('circle')
-      .attr('cx', d => timeScale(d.start))
-      .attr('cy', height / 2)
-      .attr('r', 5)
-      .attr('fill', 'blue');
+    // Create an array to hold resize markers and their colors
+    const resizeMarkers = markers.filter(marker => marker.name === 'resize');
+    const resizeColorMap = {};
 
+    resizeMarkers.forEach(marker => {
+      if (!resizeColorMap[marker.data.width]) {
+        resizeColorMap[marker.data.width] = getUniqueColor();
+      }
+      resizeColors[marker.start] = resizeColorMap[marker.data.width];
+    });
+
+    // Apply colors to timeupdate markers based on resize markers
+    const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
+    timeUpdateMarkers.forEach((currentMarker, i) => {
+      const currentColor = Object.keys(resizeColors).reduce((color, start) => {
+        return (currentMarker.start > start) ? resizeColors[start] : color;
+      }, null);
+
+      // Draw timeupdate markers with the assigned color
+      svg.append('circle')
+        .attr('cx', timeScale(currentMarker.start))
+        .attr('cy', height / 2)
+        .attr('r', 5)
+        .attr('fill', currentColor || 'orange'); // Default color if no resize found
+    });
     drawProgressMarkers(markers);
 
-    const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
     timeUpdateMarkers.forEach((currentMarker, i) => {
       if (i < timeUpdateMarkers.length - 1) {
         const nextMarker = timeUpdateMarkers[i + 1];
