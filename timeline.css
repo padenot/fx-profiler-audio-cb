@@ -1,0 +1,244 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#timeline-section {
+    height: 60%;
+    width: 100%;
+}
+
+#details-section {
+    height: 40%; /* Adjust this if needed */
+    width: 100%;
+    overflow: hidden; /* Prevent overflow */
+}
+
+/* Add your existing styles below this line */
+
+#timeline-container {
+    width: 100%;
+    height: 70vh; /* Set height to 70% of the viewport height */
+    background-color: #2c2c2c; /* Background color for the container */
+    padding: 20px; /* Optional: padding around the container */
+    box-sizing: border-box; /* Ensure padding is included in the total height */
+    overflow: hidden; /* Prevent overflow */
+}
+
+#media-status {
+    margin-top: 10px;
+}
+
+/* Styles for the table container */
+#marker-details {
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+}
+
+/* Ensure table cells display full text */
+table {
+    table-layout: auto; /* Allow automatic layout for the table */
+    width: 100%; /* Make the table take full width */
+}
+
+th, td {
+    overflow-wrap: break-word; /* Allow text to wrap within the cell */
+    word-wrap: break-word; /* For older browsers */
+    white-space: normal; /* Allow text to wrap */
+    padding: 8px; /* Add some padding */
+    border: 1px solid #ddd; /* Optional: Add border for clarity */
+}
+
+/* Optional: Add hover effect for better UX */
+tr:hover {
+    background-color: #f1f1f1; /* Light gray background on hover */
+}
+
+/* Styles for the table */
+#marker-details table {
+    width: 100%;
+    border-collapse: collapse; /* Ensures that the divider lines are neat */
+}
+
+/* Styles for the table headers */
+#marker-details th {
+    position: sticky; /* Make the header sticky */
+    top: 0; /* Stick to the top of the container */
+    background-color: #007BFF; /* Preserve the previous background color */
+    color: white; /* Preserve the text color */
+    z-index: 10; /* Ensure it stays above other content */
+}
+
+/* Styles for the table cells */
+#marker-details td {
+    text-align: left;
+    padding: 8px;
+    border: 1px solid #CCCCCC; /* Consistent with the header border */
+}
+
+.x-axis line,
+.x-axis path,
+.y-axis line,
+.y-axis path {
+    stroke: #000;
+}
+
+.x-axis text,
+.y-axis text {
+    font-size: 12px;
+}
+
+#timeline-container {
+    position: relative;
+}
+
+#current-time-display {
+    position: absolute;
+    bottom: 5px;
+    left: 10px;
+}
+
+#marker-details-container {
+    height: calc(100% - 30px); /* Adjust based on the height of media-status */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding: 10px; /* Optional padding */
+    box-sizing: border-box; /* Include padding in height calculation */
+}
+
+#marker-details {
+    /* Optional styles for the marker details */
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#marker-details th, #marker-details td {
+    border: 1px solid #ccc;
+    padding: 5px;
+    text-align: left;
+}
+
+text {
+    font-family: Arial, sans-serif; /* Optional font family */
+}
+
+#marker-details thead {
+    position: sticky; /* Make the header sticky */
+    top: 0; /* Stick to the top of the container */
+    background-color: white; /* Background color for the header */
+    z-index: 10; /* Ensure it stays above other content */
+}
+
+#marker-details tbody {
+    display: block; /* Make tbody block to control overflow */
+    max-height: calc(100% - 30px); /* Adjust based on header height */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+#marker-details tr {
+    display: table; /* Ensure rows are displayed as table rows */
+    table-layout: fixed; /* Prevent layout shifts */
+    width: 100%; /* Ensure rows take full width */
+}
+
+#tab-container {
+    margin-bottom: 10px;
+}
+
+button {
+    margin-right: 5px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#timeline-container {
+    position: relative;
+}
+
+#group-timeline {
+    margin-top: 20px; /* Space between the main timeline and group timeline */
+    width: 100%;
+    height: 100%; /* Set height to 100% of the timeline container */
+    background-color: #333; /* Dark background for better visibility */
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #2c2c2c; /* Dark background */
+    color: white; /* White text */
+}
+
+.tab-container {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    margin-right: 5px;
+    background-color: #444; /* Tab background */
+    border-radius: 5px 5px 0 0; /* Rounded corners */
+    cursor: pointer;
+    position: relative;
+}
+
+.tab:hover {
+    background-color: #555; /* Darker on hover */
+}
+
+.tab .close-btn {
+    margin-left: 10px;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+}
+
+.tab .close-btn:hover {
+    color: red; /* Change color on hover */
+}
+
+#timeline-section {
+    position: relative;
+}
+
+#marker-details {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#marker-details th, #marker-details td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+#marker-details th {
+    background-color: #444; /* Header background */
+    color: white; /* Header text color */
+}
+
+.tab.selected {
+    background-color: #007bff; /* Change to your desired color */
+    color: white; /* Change text color for contrast */
+    font-weight: bold; /* Optional: make the text bold */
+}
+
+#search-bar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}

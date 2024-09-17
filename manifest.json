@@ -8,14 +8,14 @@
     "96": "icons/icon2x.png"
   },
   "background": {
-    "scripts": ["plotly.js", "background_script.js", "playback_markers.js", "audio_budget.js"]
+    "scripts": ["plotly.js", "background_script.js", "playback_markers.js", "audio_budget.js", "playback_restore.js"]
   },
-
   "browser_action": {
     "default_icon": {
       "48": "icons/icon.png",
       "96": "icons/icon2x.png"
-    }
+    },
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
@@ -24,7 +24,9 @@
     }
   ],
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "tabs",
+    "webNavigation"
   ],
   "browser_specific_settings": {
     "gecko": {

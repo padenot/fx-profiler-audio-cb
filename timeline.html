@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline Visualization</title>
+    <link rel="stylesheet" href="timeline.css">
+    <script src="d3.min.js"></script>
+    <script src="timeline.js"></script>
+</head>
+<body>
+    <!-- Tab container for media element groups -->
+    <div id="tab-container" class="tab-container"></div>
+
+    <!-- Color legend for different resolutions -->
+    <div id="resolution-legend" style="display: flex; justify-content: center; margin-bottom: 10px;">
+    </div>
+
+    <div id="timeline-container">
+        <svg id="group-timeline"></svg>
+    </div>
+
+    <div id="details-container">
+        <input type="text" id="search-bar" placeholder="Search...">
+        <div id="marker-details"></div>
+    </div>
+</body>
+</html>
