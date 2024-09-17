@@ -391,6 +391,27 @@ function getMarkerDetails(marker) {
     return `${marker.data.width}x${marker.data.height}`;
   } else if (marker.name === 'loadedmetadata') {
     return `src: ${marker.data.src}<br>audio: ${marker.data.audioMimeType}, video: ${marker.data.videoMimeType}`;
+  } else if (marker.name == 'cdmresolved') {
+    const config = JSON.parse(marker.data.configuration);
+    let details = `<b>keySystem:</b> ${marker.data.keySystem}<br><b>config:</b> <br>`;
+    if (config.label) details += `&emsp;<b>label:</b> ${config.label}<br>`;
+    if (config.initDataTypes && config.initDataTypes.length > 0) details += `&emsp;<b>initDataTypes:</b> ${config.initDataTypes.join(', ')}<br>`;
+    if (config.audioCapabilities && config.audioCapabilities.length > 0) {
+      details += `&emsp;<b>audioCapabilities:</b> <br>`;
+      config.audioCapabilities.forEach(cap => {
+        details += `&emsp;&emsp;<b>contentType:</b> ${cap.contentType}<br>&emsp;&emsp;<b>robustness:</b> ${cap.robustness}<br>&emsp;&emsp;<b>encryptionScheme:</b> ${cap.encryptionScheme}<br>`;
+      });
+    }
+    if (config.videoCapabilities && config.videoCapabilities.length > 0) {
+      details += `&emsp;<b>videoCapabilities:</b> <br>`;
+      config.videoCapabilities.forEach(cap => {
+        details += `&emsp;&emsp;<b>contentType:</b> ${cap.contentType}<br>&emsp;&emsp;<b>robustness:</b> ${cap.robustness}<br>&emsp;&emsp;<b>encryptionScheme:</b> ${cap.encryptionScheme}<br>`;
+      });
+    }
+    if (config.distinctiveIdentifier) details += `&emsp;<b>distinctiveIdentifier:</b> ${config.distinctiveIdentifier}<br>`;
+    if (config.persistentState) details += `&emsp;<b>persistentState:</b> ${config.persistentState}<br>`;
+    if (config.sessionTypes && config.sessionTypes.length > 0) details += `&emsp;<b>sessionTypes:</b> ${config.sessionTypes.join(', ')}`;
+    return details;
   }
   return '';
 }
