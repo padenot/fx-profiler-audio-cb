@@ -6,6 +6,7 @@ let timeScale; // Define timeScale in a broader scope
 let svg; // Used to draw timeline
 let resizeColors = {}; // Object to store colors for each width
 let colorIndex = 0; // Index to assign unique colors
+let searchFilteredMarkers; // Variable to store filtered markers
 
 // Function to generate a unique color
 function getUniqueColor() {
@@ -69,6 +70,22 @@ function drawTabs() {
       tab.classed('selected', true);
     }
   });
+
+  // Add event listener for search input
+  d3.select("#search-bar").on("input", function() {
+    const searchTerm = this.value;
+    filterMarkers(searchTerm);
+  });
+}
+
+// Add this function to filter markers based on search input
+function filterMarkers(searchTerm) {
+  const regex = new RegExp(searchTerm, 'i');
+  searchFilteredMarkers = groupedMarkers[currentGroupId].filter(marker =>
+    regex.test(marker.name) || regex.test(JSON.stringify(marker.data))
+  );
+  drawGroupMarkers(searchFilteredMarkers);
+  updateMarkerDetails(currentGroupId, timeScale.invert(svg.select('line').attr('x1')));
 }
 
 // Function to draw markers for the selected group
@@ -384,7 +401,7 @@ function getMarkerDetails(marker) {
 
 function updateMarkerDetails(groupId, currentTime) {
   const range = 3;
-  const markers = groupedMarkers[groupId] || [];
+  const markers = searchFilteredMarkers || groupedMarkers[groupId] || [];
   const filteredMarkers = markers.filter(marker =>
     marker.start >= (currentTime - range) && marker.start <= (currentTime + range)
   );
