@@ -121,22 +121,24 @@ function drawGroupMarkers(markers) {
       resizeColors[marker.start] = resizeColorMap[description];
     });
 
-    // Apply colors to timeupdate markers based on resize markers
-    const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
-    timeUpdateMarkers.forEach((currentMarker, i) => {
+    // Draw all markers
+    markers.forEach((marker) => {
       const currentColor = Object.keys(resizeColors).reduce((color, start) => {
-        return (currentMarker.start > start) ? resizeColors[start].color : color;
+        return (marker.start > start) ? resizeColors[start].color : color;
       }, null);
 
-      // Draw timeupdate markers with the assigned color
+      // Draw marker
       svg.append('circle')
-        .attr('cx', timeScale(currentMarker.start))
+        .attr('cx', timeScale(marker.start))
         .attr('cy', height / 2)
         .attr('r', 5)
-        .attr('fill', currentColor || 'orange'); // Default color if no resize found
+        .attr('fill', currentColor || 'grey') // Default if no resize color found
+        .attr('stroke', 'black')
+        .attr('stroke-width', 1);
     });
     drawProgressMarkers(markers);
 
+    const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
     timeUpdateMarkers.forEach((currentMarker, i) => {
       if (i < timeUpdateMarkers.length - 1) {
         const nextMarker = timeUpdateMarkers[i + 1];
