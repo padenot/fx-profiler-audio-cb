@@ -14,6 +14,10 @@ function getUniqueColor() {
   return colors[colorIndex++ % colors.length];
 }
 
+function getCurrentGroupMarkers() {
+  return groupedMarkers[currentGroupId];
+}
+
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === "loadMarkers") {
     groupedMarkers = message.groupedMarkers;
@@ -101,6 +105,7 @@ function drawGroupMarkers(markers) {
     .attr('preserveAspectRatio', 'xMinYMin meet');
   svg.width = width;
   svg.height = height;
+  svg.margin = margin;
   svg.maxYValue = d3.max(markers, d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0) / 1000;
   svg.yScale = d3.scaleLinear()
     .domain([0, svg.maxYValue > 0 ? svg.maxYValue : 1])
@@ -123,57 +128,33 @@ function drawGroupMarkers(markers) {
 
   // Draw markers and lines
   if (markers.length > 0) {
-    // Create an array to hold resize markers and their colors
-    const resizeMarkers = markers.filter(marker => marker.name === 'resize');
-    const resizeColorMap = {};
-
-    resizeMarkers.forEach((marker, index) => {
-      const description = `${marker.data.width}x${marker.data.height}`;
-      if (!resizeColorMap[description]) {
-        resizeColorMap[description] = {
-          color: getUniqueColor(),
-          description: description
-        };
-      }
-      resizeColors[marker.start] = resizeColorMap[description];
-    });
-
-    // Draw all markers
-    markers.forEach((marker) => {
-      const currentColor = Object.keys(resizeColors).reduce((color, start) => {
-        return (marker.start > start) ? resizeColors[start].color : color;
-      }, null);
-
-      // Draw marker
-      svg.append('circle')
-        .attr('cx', timeScale(marker.start))
-        .attr('cy', height / 2)
-        .attr('r', 5)
-        .attr('fill', currentColor || 'grey') // Default if no resize color found
-        .attr('stroke', 'black')
-        .attr('stroke-width', 1);
-    });
-    drawProgressMarkers(markers);
-
-    const timeUpdateMarkers = markers.filter(marker => marker.name === 'timeupdate');
-    timeUpdateMarkers.forEach((currentMarker, i) => {
-      if (i < timeUpdateMarkers.length - 1) {
-        const nextMarker = timeUpdateMarkers[i + 1];
-        if (currentMarker.data && nextMarker.data) {
-          drawConnectionLines(currentMarker, nextMarker);
-        }
-      }
-    });
-
-    // Movable vertical line and current time text
-    setupVerticalLine(width, height, margin, markers);
-
-    // Create or update the resolution legend
-    updateResolutionLegend(resizeColorMap);
+    const resizeColorMap = createColorMap(markers);
+    drawEventDots(markers);
+    drawBufferedRange();
+    drawCurrentTimeAndDurationLines();
+    drawVerticalLine();
+    drawResolutionLegend(resizeColorMap);
   }
 }
 
-function updateResolutionLegend(colorMap) {
+function drawEventDots(markers) {
+  markers.forEach((marker) => {
+    const currentColor = Object.keys(resizeColors).reduce((color, start) => {
+      return (marker.start > start) ? resizeColors[start].color : color;
+    }, null);
+
+    // Draw marker
+    svg.append('circle')
+      .attr('cx', timeScale(marker.start))
+      .attr('cy', svg.height / 2)
+      .attr('r', 5)
+      .attr('fill', currentColor || 'grey') // Default if no resize color found
+      .attr('stroke', 'black')
+      .attr('stroke-width', 1);
+  });
+}
+
+function drawResolutionLegend(colorMap) {
   const legendContainer = d3.select("#resolution-legend");
   legendContainer.selectAll("*").remove(); // Clear existing legend items
 
@@ -199,8 +180,8 @@ function updateResolutionLegend(colorMap) {
   });
 }
 
-function drawProgressMarkers(markers) {
-  const progressMarkers = markers.filter(marker => marker.name === 'progress');
+function drawBufferedRange() {
+  const progressMarkers = getCurrentGroupMarkers().filter(marker => marker.name === 'progress');
   progressMarkers.forEach((currentMarker, i) => {
     const nextMarker = progressMarkers[i + 1] ? progressMarkers[i + 1] : null;
     // SVG's y-axis is decreasing when going up
@@ -219,29 +200,41 @@ function drawProgressMarkers(markers) {
   });
 }
 
-function drawConnectionLines(currentMarker, nextMarker) {
-  const currentY = svg.yScale(currentMarker.data.currentTimeMs / 1000);
-  const nextCurrentY = svg.yScale(nextMarker.data.currentTimeMs / 1000);
-  const durationY = svg.yScale(currentMarker.data.mediaDurationMs / 1000);
-  const nextDurationY = svg.yScale(nextMarker.data.mediaDurationMs / 1000);
+function drawCurrentTimeAndDurationLines() {
+  function drawConnectionLines(currentMarker, nextMarker) {
+    const currentY = svg.yScale(currentMarker.data.currentTimeMs / 1000);
+    const nextCurrentY = svg.yScale(nextMarker.data.currentTimeMs / 1000);
+    const durationY = svg.yScale(currentMarker.data.mediaDurationMs / 1000);
+    const nextDurationY = svg.yScale(nextMarker.data.mediaDurationMs / 1000);
 
-  svg.append('line')
-    .attr('x1', timeScale(currentMarker.start))
-    .attr('y1', durationY)
-    .attr('x2', timeScale(nextMarker.start))
-    .attr('y2', nextDurationY)
-    .attr('stroke', 'green')
-    .attr('stroke-width', 2)
-    .on('mouseover', function(event) { showTooltip(currentMarker, durationY, 'Duration', currentMarker.data.mediaDurationMs); });
+    svg.append('line')
+      .attr('x1', timeScale(currentMarker.start))
+      .attr('y1', durationY)
+      .attr('x2', timeScale(nextMarker.start))
+      .attr('y2', nextDurationY)
+      .attr('stroke', 'green')
+      .attr('stroke-width', 2)
+      .on('mouseover', function(event) { showTooltip(currentMarker, durationY, 'Duration', currentMarker.data.mediaDurationMs); });
 
-  svg.append('line')
-    .attr('x1', timeScale(currentMarker.start))
-    .attr('y1', currentY)
-    .attr('x2', timeScale(nextMarker.start))
-    .attr('y2', nextCurrentY)
-    .attr('stroke', 'orange')
-    .attr('stroke-width', 2)
-    .on('mouseover', function(event) { showTooltip(currentMarker, currentY, 'Current Time', currentMarker.data.currentTimeMs); });
+    svg.append('line')
+      .attr('x1', timeScale(currentMarker.start))
+      .attr('y1', currentY)
+      .attr('x2', timeScale(nextMarker.start))
+      .attr('y2', nextCurrentY)
+      .attr('stroke', 'orange')
+      .attr('stroke-width', 2)
+      .on('mouseover', function(event) { showTooltip(currentMarker, currentY, 'Current Time', currentMarker.data.currentTimeMs); });
+  }
+
+  const timeUpdateMarkers = getCurrentGroupMarkers().filter(marker => marker.name === 'timeupdate');
+  timeUpdateMarkers.forEach((currentMarker, i) => {
+    if (i < timeUpdateMarkers.length - 1) {
+      const nextMarker = timeUpdateMarkers[i + 1];
+      if (currentMarker.data && nextMarker.data) {
+        drawConnectionLines(currentMarker, nextMarker);
+      }
+    }
+  });
 }
 
 function showTooltip(marker, y, label, value) {
@@ -259,20 +252,38 @@ function showTooltip(marker, y, label, value) {
   });
 }
 
-function setupVerticalLine(width, height, margin, markers) {
+function createColorMap(markers) {
+  // Create an array to hold resize markers and their colors
+  const resizeMarkers = markers.filter(marker => marker.name === 'resize');
+  const resizeColorMap = {};
+
+  resizeMarkers.forEach((marker, index) => {
+    const description = `${marker.data.width}x${marker.data.height}`;
+    if (!resizeColorMap[description]) {
+      resizeColorMap[description] = {
+        color: getUniqueColor(),
+        description: description
+      };
+    }
+    resizeColors[marker.start] = resizeColorMap[description];
+  });
+  return resizeColorMap;
+}
+
+function drawVerticalLine() {
   verticalLine = svg.append("line")
-    .attr("x1", width / 2)
-    .attr("x2", width / 2)
+    .attr("x1", svg.width / 2)
+    .attr("x2", svg.width / 2)
     .attr("y1", 0)
-    .attr("y2", height - margin.bottom)
+    .attr("y2", svg.height - svg.margin.bottom)
     .attr("stroke", "red")
     .attr("stroke-width", 2)
     .attr("cursor", "pointer");
 
   const initialTimestamp = 0.00;
   currentTimeText = svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", height - margin.bottom + 20)
+    .attr("x", svg.width / 2)
+    .attr("y", svg.height - svg.margin.bottom + 20)
     .attr("text-anchor", "middle")
     .attr("fill", "orange")
     .attr("font-size", "12px")
