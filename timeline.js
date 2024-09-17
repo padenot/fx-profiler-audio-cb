@@ -182,6 +182,15 @@ function drawResolutionLegend(colorMap) {
     legendItem.append("div")
       .text(`${description}`);
   });
+
+  // Add media queries for legend layout
+  if (window.matchMedia("(max-width: 600px)").matches) {
+    // Apply vertical layout for small screens
+    legendContainer.style("flex-direction", "column");
+  } else {
+    // Apply horizontal layout for larger screens
+    legendContainer.style("flex-direction", "row");
+  }
 }
 
 function drawBufferedRange() {
@@ -450,4 +459,55 @@ function updateMarkerDetails(groupId, currentTime) {
   });
 
   markerDetailsContainer.appendChild(table);
+}
+
+function handleResize() {
+  const container = document.getElementById('timeline-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // Update SVG dimensions
+  svg.attr('width', width).attr('height', height)
+    .attr('viewBox', `0 0 ${width} ${height}`);
+
+  // Recalculate scales
+  timeScale.range([svg.margin.left, width - svg.margin.right]);
+  svg.yScale.range([height - svg.margin.bottom, svg.margin.top]);
+
+  drawGroupMarkers(getCurrentGroupMarkers());
+  updateLegendLayout();
+  updateMarkerDetailsLayout();
+}
+
+window.addEventListener('resize', handleResize);
+
+function updateLegendLayout() {
+  const legendContainer = d3.select("#resolution-legend");
+  if (window.matchMedia("(max-width: 600px)").matches) {
+    // Apply vertical layout for small screens
+    legendContainer.style("flex-direction", "column");
+    legendContainer.selectAll("div")
+      .style("margin", "5px 0");
+  } else {
+    // Apply horizontal layout for larger screens
+    legendContainer.style("flex-direction", "row");
+    legendContainer.selectAll("div")
+      .style("margin", "0 10px");
+  }
+}
+
+function updateMarkerDetailsLayout() {
+  const markerDetailsContainer = document.getElementById("marker-details");
+  const table = markerDetailsContainer.querySelector("table");
+  if (window.matchMedia("(max-width: 600px)").matches) {
+    // Make table scrollable on small screens
+    markerDetailsContainer.style.overflowX = "auto";
+    table.style.width = "100%";
+    table.style.fontSize = "12px";
+  } else {
+    // Reset styles for larger screens
+    markerDetailsContainer.style.overflowX = "visible";
+    table.style.width = "auto";
+    table.style.fontSize = "14px";
+  }
 }
