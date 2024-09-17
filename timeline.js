@@ -214,7 +214,6 @@ function drawCurrentTimeAndDurationLines() {
       .attr('y2', nextDurationY)
       .attr('stroke', 'green')
       .attr('stroke-width', 2)
-      .on('mouseover', function(event) { showTooltip(currentMarker, durationY, 'Duration', currentMarker.data.mediaDurationMs); });
 
     svg.append('line')
       .attr('x1', timeScale(currentMarker.start))
@@ -223,7 +222,6 @@ function drawCurrentTimeAndDurationLines() {
       .attr('y2', nextCurrentY)
       .attr('stroke', 'orange')
       .attr('stroke-width', 2)
-      .on('mouseover', function(event) { showTooltip(currentMarker, currentY, 'Current Time', currentMarker.data.currentTimeMs); });
   }
 
   const timeUpdateMarkers = getCurrentGroupMarkers().filter(marker => marker.name === 'timeupdate');
@@ -234,21 +232,6 @@ function drawCurrentTimeAndDurationLines() {
         drawConnectionLines(currentMarker, nextMarker);
       }
     }
-  });
-}
-
-function showTooltip(marker, y, label, value) {
-  const tooltip = svg.append('text')
-    .attr('x', timeScale(marker.start))
-    .attr('y', y)
-    .attr('text-anchor', 'middle')
-    .attr('dominant-baseline', 'middle')
-    .attr('font-size', '12px')
-    .attr('fill', 'white')
-    .text(`${label}: ${value / 1000} s`);
-
-  d3.select(this).on('mouseout', function() {
-    tooltip.remove();
   });
 }
 
