@@ -7,11 +7,15 @@ let svg; // Used to draw timeline
 let resizeColors = {}; // Object to store colors for each width
 let colorIndex = 0; // Index to assign unique colors
 let searchFilteredMarkers; // Variable to store filtered markers
+let resolutionColorMap = {}; // Global object to store colors for each resolution
 
 // Function to generate a unique color
-function getUniqueColor() {
-  const colors = ['red', 'blue', 'yellow', 'orange', 'purple', 'cyan', 'magenta'];
-  return colors[colorIndex++ % colors.length];
+function getUniqueColor(resolution) {
+  if (!resolutionColorMap[resolution]) {
+    const colors = ['red', 'blue', 'yellow', 'orange', 'purple', 'cyan', 'magenta'];
+    resolutionColorMap[resolution] = colors[Object.keys(resolutionColorMap).length % colors.length];
+  }
+  return resolutionColorMap[resolution];
 }
 
 function getCurrentGroupMarkers() {
@@ -244,7 +248,7 @@ function createColorMap(markers) {
     const description = `${marker.data.width}x${marker.data.height}`;
     if (!resizeColorMap[description]) {
       resizeColorMap[description] = {
-        color: getUniqueColor(),
+        color: getUniqueColor(description),
         description: description
       };
     }
