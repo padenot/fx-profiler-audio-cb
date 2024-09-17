@@ -395,6 +395,8 @@ function getMarkerDetails(marker) {
     return `bufferStart : ${marker.data.bufferStartMs} ms, bufferEnd : ${marker.data.bufferEndMs} ms`;
   } else if (marker.name === 'resize') {
     return `${marker.data.width}x${marker.data.height}`;
+  } else if (marker.name === 'loadedmetadata') {
+    return `src: ${marker.data.src}<br>audio: ${marker.data.audioMimeType}, video: ${marker.data.videoMimeType}`;
   }
   return '';
 }
