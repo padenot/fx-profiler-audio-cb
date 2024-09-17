@@ -6,7 +6,7 @@ then
   exit 1
 fi
 
-source ~/.amo-credentials
+. ~/.amo-credentials
 
 if [ -z $AMO_JWT_ISSUER ]
 then
@@ -20,4 +20,4 @@ then
   exit 1
 fi
 
-web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET
+web-ext sign --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JWT_SECRET --channel unlisted
