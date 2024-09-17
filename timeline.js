@@ -259,14 +259,14 @@ function setupVerticalLine(width, height, margin, markers) {
     .attr("font-size", "12px")
     .text(initialTimestamp.toFixed(2));
 
-  setupKeyboardNavigation(verticalLine, markers);
+  setupKeyboardNavigation(verticalLine);
   svg.on("mousemove", function(event) {
     const [x] = d3.pointer(event);
     moveLine(x);
   });
 }
 
-function setupKeyboardNavigation(verticalLine, markers) {
+function setupKeyboardNavigation(verticalLine) {
   const step = (timeScale.range()[1] - timeScale.range()[0]) / 500;
 
   document.addEventListener('keydown', function(event) {
