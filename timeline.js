@@ -106,7 +106,7 @@ function drawGroupMarkers(markers) {
   svg.width = width;
   svg.height = height;
   svg.margin = margin;
-  svg.maxYValue = d3.max(markers, d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0) / 1000;
+  svg.maxYValue = d3.max(getCurrentGroupMarkers(), d => d.data ? Math.max(d.data.currentTimeMs, d.data.mediaDurationMs) : 0) / 1000;
   svg.yScale = d3.scaleLinear()
     .domain([0, svg.maxYValue > 0 ? svg.maxYValue : 1])
     .range([svg.height - margin.bottom, margin.top]);
