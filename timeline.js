@@ -115,6 +115,11 @@ function drawGroupMarkers(markers) {
   svg.yScale = d3.scaleLinear()
     .domain([0, svg.maxYValue > 0 ? svg.maxYValue : 1])
     .range([svg.height - margin.bottom, margin.top]);
+  svg.visibleHeight = height - margin.bottom;
+  svg.visibleYScale = d3.scaleLinear()
+    .domain([0, svg.visibleHeight > 0 ? svg.visibleHeight : 1])
+    .range([svg.height - margin.bottom, margin.top]);
+
   svg.selectAll('*').remove();
 
   // Set up scales
@@ -137,6 +142,7 @@ function drawGroupMarkers(markers) {
     drawEventDots(markers);
     drawBufferedRange();
     drawCurrentTimeAndDurationLines();
+    drawFPSLines();
     drawVerticalLine();
     drawResolutionLegend(resizeColorMap);
   }
@@ -249,6 +255,68 @@ function drawCurrentTimeAndDurationLines() {
   });
 }
 
+function getFpsMarkers() {
+  return getCurrentGroupMarkers().filter(marker =>
+    marker.name === 'timeupdate' && marker.data && marker.data.paintedFrames !== undefined
+  );
+}
+
+function drawFPSLines() {
+  const fpsMarkers = getFpsMarkers();
+  if (fpsMarkers.length < 2) return; // We need at least two points to draw a line
+
+  const lineData = [];
+  let currentSegment = []; // Start a new segment for valid points
+  fpsMarkers.forEach((marker, index) => {
+    const fps = calculateFPS(marker, fpsMarkers);
+    if (fps !== 'N/A') {
+      const point = {
+        x: timeScale(marker.start),
+        y: svg.visibleYScale(parseFloat(fps))
+      };
+
+      currentSegment.push(point); // Add valid point to the current segment
+    } else {
+      if (currentSegment.length > 0) {
+        lineData.push(currentSegment); // Push the current segment to lineData
+        currentSegment = []; // Reset for the next segment
+      }
+    }
+  });
+
+  // Push any remaining segment after the loop
+  if (currentSegment.length > 0) {
+    lineData.push(currentSegment);
+  }
+
+  const line = d3.line()
+    .x(d => d.x)
+    .y(d => d.y);
+
+  lineData.forEach(segment => {
+    svg.append('path')
+      .datum(segment)
+      .attr('fill', 'none')
+      .attr('stroke', 'purple')
+      .attr('stroke-width', 2)
+      .attr('d', line);
+  });
+
+  // Draw grey dotted lines for breaks
+  for (let i = 0; i < lineData.length - 1; i++) {
+    const endPoint = lineData[i][lineData[i].length - 1]; // Last point of the current segment
+    const startPoint = lineData[i + 1][0]; // First point of the next segment
+    svg.append('line')
+      .attr('x1', endPoint.x)
+      .attr('y1', endPoint.y)
+      .attr('x2', startPoint.x)
+      .attr('y2', startPoint.y)
+      .attr('stroke', 'grey')
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '5,5'); // Dotted line
+  }
+}
+
 function createColorMap(markers) {
   // Create an array to hold resize markers and their colors
   const resizeMarkers = markers.filter(marker => marker.name === 'resize');
@@ -351,6 +419,10 @@ function moveLine(x) {
     const resolutionText = closestResolution ? `Resolution:` : '';
     const resolutionValue = closestResolution && closestResolution.data ? `${closestResolution.data.width}x${closestResolution.data.height}` : '';
 
+    const fpsText = closestTimeupdate && closestTimeupdate.data && closestTimeupdate.data.paintedFrames !== undefined ? `FPS:` : '';
+    const fpsValue = closestTimeupdate && closestTimeupdate.data && closestTimeupdate.data.paintedFrames !== undefined ?
+      calculateFPS(closestTimeupdate, markers) : '';
+
     const textX = x; // Base x position for the labels
     const valueXOffset = 100; // Adjust this value to align the YYYs
 
@@ -392,12 +464,45 @@ function moveLine(x) {
       .append("tspan")
       .attr("x", valueXOffset + textX)
       .text(resolutionValue)
+      .append("tspan")
+      .attr("x", textX)
+      .attr("dy", "0.9em")
+      .text(fpsText)
+      .append("tspan")
+      .attr("x", valueXOffset + textX)
+      .text(fpsValue);
   }
+}
+
+function calculateFPS(currentMarker, markers) {
+  if (!currentMarker || !currentMarker.data || currentMarker.data.paintedFrames === undefined) {
+    return 'N/A';
+  }
+
+  const prevMarkerIndex = markers.findIndex(m => m === currentMarker);
+  const prevMarker = prevMarkerIndex > 0 ? markers[prevMarkerIndex - 1] : null;
+  if (!prevMarker || !prevMarker.data || prevMarker.data.paintedFrames === undefined) {
+    return 'N/A';
+  }
+
+  const frameDiff = currentMarker.data.paintedFrames - prevMarker.data.paintedFrames;
+  const timeDiff = (currentMarker.data.currentTimeMs - prevMarker.data.currentTimeMs) / 1000;
+  if (timeDiff <= 0) {
+    return 'N/A';
+  }
+
+  const fps = frameDiff / timeDiff;
+  return fps.toFixed(2);
 }
 
 function getMarkerDetails(marker) {
   if (marker.name === 'timeupdate') {
-    return marker.data ? `currentTime : ${marker.data.currentTimeMs} ms, duration : ${marker.data.mediaDurationMs} ms` : '';
+    let details = marker.data ? `currentTime : ${marker.data.currentTimeMs} ms, duration : ${marker.data.mediaDurationMs} ms` : '';
+    if (marker.data && marker.data.paintedFrames !== undefined) {
+      const fps = calculateFPS(marker, getFpsMarkers());
+      details += `<br>paintedFrames : ${marker.data.paintedFrames}, FPS : ${fps}`;
+    }
+    return details;
   } else if (marker.name === 'progress') {
     return `bufferStart : ${marker.data.bufferStartMs} ms, bufferEnd : ${marker.data.bufferEndMs} ms`;
   } else if (marker.name === 'resize') {
