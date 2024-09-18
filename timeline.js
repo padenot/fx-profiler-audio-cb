@@ -419,9 +419,9 @@ function moveLine(x) {
     const resolutionText = closestResolution ? `Resolution:` : '';
     const resolutionValue = closestResolution && closestResolution.data ? `${closestResolution.data.width}x${closestResolution.data.height}` : '';
 
-    const fpsText = closestTimeupdate && closestTimeupdate.data && closestTimeupdate.data.paintedFrames !== undefined ? `FPS:` : '';
-    const fpsValue = closestTimeupdate && closestTimeupdate.data && closestTimeupdate.data.paintedFrames !== undefined ?
-      calculateFPS(closestTimeupdate, markers) : '';
+    const closestFpsMarker = getFpsMarkers().findLast(marker => marker.start <= currentTime);
+    const fpsText = closestFpsMarker ? `FPS:` : '';
+    const fpsValue = closestFpsMarker ? calculateFPS(closestFpsMarker, getFpsMarkers()) : '';
 
     const textX = x; // Base x position for the labels
     const valueXOffset = 100; // Adjust this value to align the YYYs
