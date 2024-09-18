@@ -94,6 +94,7 @@ th, td {
 /* Optional: Add hover effect for better UX */
 tr:hover {
     background-color: #f1f1f1; /* Light gray background on hover */
+    color: #333; /* Change text color for contrast */
 }
 
 /* Styles for the table */
