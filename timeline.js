@@ -357,7 +357,6 @@ function moveLine(x) {
     svg.append("text")
       .attr("class", "closest-text")
       .attr("x", textX)
-      .attr("y", svg.maxYValue)
       .attr("text-anchor", "start")
       .attr("fill", "white")
       .attr("font-size", "13px")
