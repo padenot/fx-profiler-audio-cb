@@ -8,6 +8,7 @@ let resizeColors = {}; // Object to store colors for each width
 let colorIndex = 0; // Index to assign unique colors
 let searchFilteredMarkers; // Variable to store filtered markers
 let resolutionColorMap = {}; // Global object to store colors for each resolution
+const excludedMarkers = ['rendervideo']; // Markers won't show in the details section
 
 // Function to generate a unique color
 function getUniqueColor(resolution) {
@@ -449,6 +450,8 @@ function updateMarkerDetails(groupId, currentTime) {
   table.appendChild(headerRow);
 
   filteredMarkers.forEach(marker => {
+    if (excludedMarkers.includes(marker.name)) return;
+
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${marker.name}</td>
