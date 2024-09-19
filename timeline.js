@@ -261,7 +261,23 @@ function getFpsMarkers() {
   );
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('fps-toggle').addEventListener('change', function() {
+    drawFPSLines();
+  });
+  // Initial call to drawFPSLines to set the correct state on load
+  drawFPSLines();
+});
+
 function drawFPSLines() {
+  // Clear existing FPS lines
+  svg.selectAll('.fps-line').remove(); // Remove previous FPS lines
+  svg.selectAll('.dotted-line').remove(); // Remove previous dotted lines
+
+  // Check if the checkbox is checked
+  const showFPSLines = document.getElementById('fps-toggle').checked;
+  if (!showFPSLines) return; // Exit if checkbox is not checked
+
   const fpsMarkers = getFpsMarkers();
   if (fpsMarkers.length < 2) return; // We need at least two points to draw a line
 
@@ -299,7 +315,8 @@ function drawFPSLines() {
       .attr('fill', 'none')
       .attr('stroke', 'purple')
       .attr('stroke-width', 2)
-      .attr('d', line);
+      .attr('d', line)
+      .attr('class', 'fps-line'); // Add class for easy removal
   });
 
   // Draw grey dotted lines for breaks
@@ -313,7 +330,8 @@ function drawFPSLines() {
       .attr('y2', startPoint.y)
       .attr('stroke', 'grey')
       .attr('stroke-width', 1)
-      .attr('stroke-dasharray', '5,5'); // Dotted line
+      .attr('stroke-dasharray', '5,5') // Dotted line
+      .attr('class', 'dotted-line'); // Add class for easy removal
   }
 }
 
