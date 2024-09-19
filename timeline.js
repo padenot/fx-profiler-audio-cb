@@ -548,6 +548,17 @@ function getMarkerDetails(marker) {
     if (config.persistentState) details += `&emsp;<b>persistentState:</b> ${config.persistentState}<br>`;
     if (config.sessionTypes && config.sessionTypes.length > 0) details += `&emsp;<b>sessionTypes:</b> ${config.sessionTypes.join(', ')}`;
     return details;
+  } else if (marker.name === 'error') {
+    return `${marker.data.errorMessage}`;
+  } else if (marker.name === 'mozloaderror') {
+    const isNetworkError = !marker.data.errorMessage.includes('decoder') ? "true" : "false";
+    const errorFormat = /^\d+:\s/;
+    if (errorFormat.test(marker.data.errorMessage)) {
+      const [number, detail] = marker.data.errorMessage.split(': ');
+      return `NetworkError: ${isNetworkError}<br>0x${parseInt(number).toString(16)}: ${detail} (see the <a href="https://searchfox.org/mozilla-central/source/__GENERATED__/xpcom/base/ErrorList.h" target="_blank">error list</a>)`;
+    } else {
+      return `NetworkError: ${isNetworkError}<br>${marker.data.errorMessage}`;
+    }
   }
   return '';
 }
