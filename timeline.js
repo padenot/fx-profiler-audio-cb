@@ -154,14 +154,23 @@ function drawEventDots(markers) {
       return (marker.start > start) ? resizeColors[start].color : color;
     }, null);
 
-    // Draw marker
-    svg.append('circle')
-      .attr('cx', timeScale(marker.start))
-      .attr('cy', svg.height / 2)
-      .attr('r', 5)
-      .attr('fill', currentColor || 'grey') // Default if no resize color found
-      .attr('stroke', 'black')
-      .attr('stroke-width', 1);
+    if (marker.name === 'error') {
+      svg.append('text')
+          .attr('x', timeScale(marker.start))
+          .attr('y', svg.height / 2 + 5) // align with dots in y-axis
+          .attr('fill', 'red')
+          .attr('font-size', '12px')
+          .text('❌'); // Error icon
+    } else {
+      // Draw marker
+      svg.append('circle')
+          .attr('cx', timeScale(marker.start))
+          .attr('cy', svg.height / 2)
+          .attr('r', 5)
+          .attr('fill', currentColor || 'grey') // Default if no resize color found
+          .attr('stroke', 'black')
+          .attr('stroke-width', 1);
+    }
   });
 }
 
