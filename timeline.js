@@ -527,7 +527,7 @@ function getMarkerDetails(marker) {
     return `${marker.data.width}x${marker.data.height}`;
   } else if (marker.name === 'loadedmetadata') {
     return `src: ${marker.data.src}<br>audio: ${marker.data.audioMimeType}, video: ${marker.data.videoMimeType}`;
-  } else if (marker.name == 'cdmresolved') {
+  } else if (marker.name == 'mozcdmresolved') {
     const config = JSON.parse(marker.data.configuration);
     let details = `<b>keySystem:</b> ${marker.data.keySystem}<br><b>config:</b> <br>`;
     if (config.label) details += `&emsp;<b>label:</b> ${config.label}<br>`;
