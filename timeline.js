@@ -161,6 +161,13 @@ function drawEventDots(markers) {
           .attr('fill', 'red')
           .attr('font-size', '12px')
           .text('❌'); // Error icon
+    } else if (marker.name === 'mozloadresource') {
+      svg.append('text')
+          .attr('x', timeScale(marker.start))
+          .attr('y', svg.height / 2 + 5) // align with dots in y-axis
+          .attr('fill', 'green')
+          .attr('font-size', '12px')
+          .text('⬇️'); // Download icon
     } else {
       // Draw marker
       svg.append('circle')
@@ -568,6 +575,11 @@ function getMarkerDetails(marker) {
     } else {
       return `NetworkError: ${isNetworkError}<br>${marker.data.errorMessage}`;
     }
+  } else if (marker.name === 'mozloadresource') {
+    let details = `url: <b>${marker.data.src}</b>`;
+    if (marker.data.type !== '') details += `, type: ${marker.data.type}`;
+    if (marker.data.media !== '') details += `, media: ${marker.data.media}`;
+    return details;
   }
   return '';
 }
