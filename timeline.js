@@ -148,6 +148,15 @@ function drawGroupMarkers(markers) {
   }
 }
 
+function getMarkerIcon(name) {
+  if (name === 'error') {
+    return '❌';
+  } else if (name === 'mozloadresource') {
+    return '⬇️';
+  }
+  return '';
+}
+
 function drawEventDots(markers) {
   markers.forEach((marker) => {
     const currentColor = Object.keys(resizeColors).reduce((color, start) => {
@@ -160,14 +169,14 @@ function drawEventDots(markers) {
           .attr('y', svg.height / 2 + 5) // align with dots in y-axis
           .attr('fill', 'red')
           .attr('font-size', '12px')
-          .text('❌'); // Error icon
+          .text(getMarkerIcon(marker.name)); // Error icon
     } else if (marker.name === 'mozloadresource') {
       svg.append('text')
           .attr('x', timeScale(marker.start))
-          .attr('y', svg.height / 2 + 5) // align with dots in y-axis
+          .attr('y', svg.height / 2 + 4) // align with dots in y-axis
           .attr('fill', 'green')
           .attr('font-size', '12px')
-          .text('⬇️'); // Download icon
+          .text(getMarkerIcon(marker.name)); // Download icon
     } else {
       // Draw marker
       svg.append('circle')
@@ -608,7 +617,7 @@ function updateMarkerDetails(groupId, currentTime) {
 
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${marker.name}</td>
+      <td>${marker.name} ${getMarkerIcon(marker.name)}</td>
       <td>${getMarkerDetails(marker)}</td>
       <td>${marker.start.toFixed(2)}</td>
     `;
