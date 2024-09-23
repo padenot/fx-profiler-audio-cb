@@ -9,20 +9,28 @@
     <script src="timeline.js"></script>
 </head>
 <body>
-    <!-- Tab container for media element groups -->
-    <div id="tab-container" class="tab-container"></div>
+    <div id="main-container">
+        <!-- Tab container for media element groups -->
+        <div id="tab-container" class="tab-container"></div>
 
-    <!-- Color legend for different resolutions -->
-    <div id="resolution-legend" style="display: flex; justify-content: center; margin-bottom: 10px;">
-    </div>
+        <!-- Color legend for different resolutions -->
+        <div id="resolution-legend" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
 
-    <div id="timeline-container">
-        <svg id="group-timeline"></svg>
-    </div>
+        <div class="label-container">
+            <input type="checkbox" id="fps-toggle">
+            <label for="fps-toggle">FPS</label>
+        </div>
 
-    <div id="details-container">
-        <input type="text" id="search-bar" placeholder="Search...">
-        <div id="marker-details"></div>
+        <div id="timeline-container">
+            <svg id="group-timeline"></svg>
+        </div>
+
+        <div id="details-container">
+            <input type="text" id="search-bar" placeholder="Search...">
+            <div id="marker-details-wrapper">
+                <div id="marker-details"></div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

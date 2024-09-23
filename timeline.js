@@ -7,11 +7,16 @@ let svg; // Used to draw timeline
 let resizeColors = {}; // Object to store colors for each width
 let colorIndex = 0; // Index to assign unique colors
 let searchFilteredMarkers; // Variable to store filtered markers
+let resolutionColorMap = {}; // Global object to store colors for each resolution
+const excludedMarkers = ['rendervideo']; // Markers won't show in the details section
 
 // Function to generate a unique color
-function getUniqueColor() {
-  const colors = ['red', 'blue', 'yellow', 'orange', 'purple', 'cyan', 'magenta'];
-  return colors[colorIndex++ % colors.length];
+function getUniqueColor(resolution) {
+  if (!resolutionColorMap[resolution]) {
+    const colors = ['red', 'blue', 'yellow', 'orange', 'purple', 'cyan', 'magenta'];
+    resolutionColorMap[resolution] = colors[Object.keys(resolutionColorMap).length % colors.length];
+  }
+  return resolutionColorMap[resolution];
 }
 
 function getCurrentGroupMarkers() {
@@ -110,6 +115,11 @@ function drawGroupMarkers(markers) {
   svg.yScale = d3.scaleLinear()
     .domain([0, svg.maxYValue > 0 ? svg.maxYValue : 1])
     .range([svg.height - margin.bottom, margin.top]);
+  svg.visibleHeight = height - margin.bottom;
+  svg.visibleYScale = d3.scaleLinear()
+    .domain([0, svg.visibleHeight > 0 ? svg.visibleHeight : 1])
+    .range([svg.height - margin.bottom, margin.top]);
+
   svg.selectAll('*').remove();
 
   // Set up scales
@@ -132,9 +142,19 @@ function drawGroupMarkers(markers) {
     drawEventDots(markers);
     drawBufferedRange();
     drawCurrentTimeAndDurationLines();
+    drawFPSLines();
     drawVerticalLine();
     drawResolutionLegend(resizeColorMap);
   }
+}
+
+function getMarkerIcon(name) {
+  if (name === 'error') {
+    return '❌';
+  } else if (name === 'mozloadresource') {
+    return '⬇️';
+  }
+  return '';
 }
 
 function drawEventDots(markers) {
@@ -143,14 +163,30 @@ function drawEventDots(markers) {
       return (marker.start > start) ? resizeColors[start].color : color;
     }, null);
 
-    // Draw marker
-    svg.append('circle')
-      .attr('cx', timeScale(marker.start))
-      .attr('cy', svg.height / 2)
-      .attr('r', 5)
-      .attr('fill', currentColor || 'grey') // Default if no resize color found
-      .attr('stroke', 'black')
-      .attr('stroke-width', 1);
+    if (marker.name === 'error') {
+      svg.append('text')
+          .attr('x', timeScale(marker.start))
+          .attr('y', svg.height / 2 + 5) // align with dots in y-axis
+          .attr('fill', 'red')
+          .attr('font-size', '12px')
+          .text(getMarkerIcon(marker.name)); // Error icon
+    } else if (marker.name === 'mozloadresource') {
+      svg.append('text')
+          .attr('x', timeScale(marker.start))
+          .attr('y', svg.height / 2 + 4) // align with dots in y-axis
+          .attr('fill', 'green')
+          .attr('font-size', '12px')
+          .text(getMarkerIcon(marker.name)); // Download icon
+    } else {
+      // Draw marker
+      svg.append('circle')
+          .attr('cx', timeScale(marker.start))
+          .attr('cy', svg.height / 2)
+          .attr('r', 5)
+          .attr('fill', currentColor || 'grey') // Default if no resize color found
+          .attr('stroke', 'black')
+          .attr('stroke-width', 1);
+    }
   });
 }
 
@@ -178,6 +214,15 @@ function drawResolutionLegend(colorMap) {
     legendItem.append("div")
       .text(`${description}`);
   });
+
+  // Add media queries for legend layout
+  if (window.matchMedia("(max-width: 600px)").matches) {
+    // Apply vertical layout for small screens
+    legendContainer.style("flex-direction", "column");
+  } else {
+    // Apply horizontal layout for larger screens
+    legendContainer.style("flex-direction", "row");
+  }
 }
 
 function drawBufferedRange() {
@@ -235,6 +280,86 @@ function drawCurrentTimeAndDurationLines() {
   });
 }
 
+function getFpsMarkers() {
+  return getCurrentGroupMarkers().filter(marker =>
+    marker.name === 'timeupdate' && marker.data && marker.data.paintedFrames !== undefined
+  );
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('fps-toggle').addEventListener('change', function() {
+    drawFPSLines();
+  });
+  // Initial call to drawFPSLines to set the correct state on load
+  drawFPSLines();
+});
+
+function drawFPSLines() {
+  // Clear existing FPS lines
+  svg.selectAll('.fps-line').remove(); // Remove previous FPS lines
+  svg.selectAll('.dotted-line').remove(); // Remove previous dotted lines
+
+  // Check if the checkbox is checked
+  const showFPSLines = document.getElementById('fps-toggle').checked;
+  if (!showFPSLines) return; // Exit if checkbox is not checked
+
+  const fpsMarkers = getFpsMarkers();
+  if (fpsMarkers.length < 2) return; // We need at least two points to draw a line
+
+  const lineData = [];
+  let currentSegment = []; // Start a new segment for valid points
+  fpsMarkers.forEach((marker, index) => {
+    const fps = calculateFPS(marker, fpsMarkers);
+    if (fps !== 'N/A') {
+      const point = {
+        x: timeScale(marker.start),
+        y: svg.visibleYScale(parseFloat(fps))
+      };
+
+      currentSegment.push(point); // Add valid point to the current segment
+    } else {
+      if (currentSegment.length > 0) {
+        lineData.push(currentSegment); // Push the current segment to lineData
+        currentSegment = []; // Reset for the next segment
+      }
+    }
+  });
+
+  // Push any remaining segment after the loop
+  if (currentSegment.length > 0) {
+    lineData.push(currentSegment);
+  }
+
+  const line = d3.line()
+    .x(d => d.x)
+    .y(d => d.y);
+
+  lineData.forEach(segment => {
+    svg.append('path')
+      .datum(segment)
+      .attr('fill', 'none')
+      .attr('stroke', 'purple')
+      .attr('stroke-width', 2)
+      .attr('d', line)
+      .attr('class', 'fps-line'); // Add class for easy removal
+  });
+
+  // Draw grey dotted lines for breaks
+  for (let i = 0; i < lineData.length - 1; i++) {
+    const endPoint = lineData[i][lineData[i].length - 1]; // Last point of the current segment
+    const startPoint = lineData[i + 1][0]; // First point of the next segment
+    svg.append('line')
+      .attr('x1', endPoint.x)
+      .attr('y1', endPoint.y)
+      .attr('x2', startPoint.x)
+      .attr('y2', startPoint.y)
+      .attr('stroke', 'grey')
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '5,5') // Dotted line
+      .attr('class', 'dotted-line'); // Add class for easy removal
+  }
+}
+
 function createColorMap(markers) {
   // Create an array to hold resize markers and their colors
   const resizeMarkers = markers.filter(marker => marker.name === 'resize');
@@ -244,7 +369,7 @@ function createColorMap(markers) {
     const description = `${marker.data.width}x${marker.data.height}`;
     if (!resizeColorMap[description]) {
       resizeColorMap[description] = {
-        color: getUniqueColor(),
+        color: getUniqueColor(description),
         description: description
       };
     }
@@ -337,13 +462,16 @@ function moveLine(x) {
     const resolutionText = closestResolution ? `Resolution:` : '';
     const resolutionValue = closestResolution && closestResolution.data ? `${closestResolution.data.width}x${closestResolution.data.height}` : '';
 
+    const closestFpsMarker = getFpsMarkers().findLast(marker => marker.start <= currentTime);
+    const fpsText = closestFpsMarker ? `FPS:` : '';
+    const fpsValue = closestFpsMarker ? calculateFPS(closestFpsMarker, getFpsMarkers()) : '';
+
     const textX = x; // Base x position for the labels
     const valueXOffset = 100; // Adjust this value to align the YYYs
 
     svg.append("text")
       .attr("class", "closest-text")
       .attr("x", textX)
-      .attr("y", svg.maxYValue)
       .attr("text-anchor", "start")
       .attr("fill", "white")
       .attr("font-size", "13px")
@@ -379,18 +507,88 @@ function moveLine(x) {
       .append("tspan")
       .attr("x", valueXOffset + textX)
       .text(resolutionValue)
+      .append("tspan")
+      .attr("x", textX)
+      .attr("dy", "0.9em")
+      .text(fpsText)
+      .append("tspan")
+      .attr("x", valueXOffset + textX)
+      .text(fpsValue);
   }
+}
+
+function calculateFPS(currentMarker, markers) {
+  if (!currentMarker || !currentMarker.data || currentMarker.data.paintedFrames === undefined) {
+    return 'N/A';
+  }
+
+  const prevMarkerIndex = markers.findIndex(m => m === currentMarker);
+  const prevMarker = prevMarkerIndex > 0 ? markers[prevMarkerIndex - 1] : null;
+  if (!prevMarker || !prevMarker.data || prevMarker.data.paintedFrames === undefined) {
+    return 'N/A';
+  }
+
+  const frameDiff = currentMarker.data.paintedFrames - prevMarker.data.paintedFrames;
+  const timeDiff = (currentMarker.data.currentTimeMs - prevMarker.data.currentTimeMs) / 1000;
+  if (timeDiff <= 0) {
+    return 'N/A';
+  }
+
+  const fps = frameDiff / timeDiff;
+  return fps.toFixed(2);
 }
 
 function getMarkerDetails(marker) {
   if (marker.name === 'timeupdate') {
-    return marker.data ? `currentTime : ${marker.data.currentTimeMs} ms, duration : ${marker.data.mediaDurationMs} ms` : '';
+    let details = marker.data ? `currentTime : ${marker.data.currentTimeMs} ms, duration : ${marker.data.mediaDurationMs} ms` : '';
+    if (marker.data && marker.data.paintedFrames !== undefined) {
+      const fps = calculateFPS(marker, getFpsMarkers());
+      details += `<br>paintedFrames : ${marker.data.paintedFrames}, FPS : ${fps}`;
+    }
+    return details;
   } else if (marker.name === 'progress') {
     return `bufferStart : ${marker.data.bufferStartMs} ms, bufferEnd : ${marker.data.bufferEndMs} ms`;
   } else if (marker.name === 'resize') {
     return `${marker.data.width}x${marker.data.height}`;
   } else if (marker.name === 'loadedmetadata') {
     return `src: ${marker.data.src}<br>audio: ${marker.data.audioMimeType}, video: ${marker.data.videoMimeType}`;
+  } else if (marker.name == 'mozcdmresolved') {
+    const config = JSON.parse(marker.data.configuration);
+    let details = `<b>keySystem:</b> ${marker.data.keySystem}<br><b>config:</b> <br>`;
+    if (config.label) details += `&emsp;<b>label:</b> ${config.label}<br>`;
+    if (config.initDataTypes && config.initDataTypes.length > 0) details += `&emsp;<b>initDataTypes:</b> ${config.initDataTypes.join(', ')}<br>`;
+    if (config.audioCapabilities && config.audioCapabilities.length > 0) {
+      details += `&emsp;<b>audioCapabilities:</b> <br>`;
+      config.audioCapabilities.forEach(cap => {
+        details += `&emsp;&emsp;<b>contentType:</b> ${cap.contentType}<br>&emsp;&emsp;<b>robustness:</b> ${cap.robustness}<br>&emsp;&emsp;<b>encryptionScheme:</b> ${cap.encryptionScheme}<br>`;
+      });
+    }
+    if (config.videoCapabilities && config.videoCapabilities.length > 0) {
+      details += `&emsp;<b>videoCapabilities:</b> <br>`;
+      config.videoCapabilities.forEach(cap => {
+        details += `&emsp;&emsp;<b>contentType:</b> ${cap.contentType}<br>&emsp;&emsp;<b>robustness:</b> ${cap.robustness}<br>&emsp;&emsp;<b>encryptionScheme:</b> ${cap.encryptionScheme}<br>`;
+      });
+    }
+    if (config.distinctiveIdentifier) details += `&emsp;<b>distinctiveIdentifier:</b> ${config.distinctiveIdentifier}<br>`;
+    if (config.persistentState) details += `&emsp;<b>persistentState:</b> ${config.persistentState}<br>`;
+    if (config.sessionTypes && config.sessionTypes.length > 0) details += `&emsp;<b>sessionTypes:</b> ${config.sessionTypes.join(', ')}`;
+    return details;
+  } else if (marker.name === 'error') {
+    return `${marker.data.errorMessage}`;
+  } else if (marker.name === 'mozloaderror') {
+    const isNetworkError = !marker.data.errorMessage.includes('decoder') ? "true" : "false";
+    const errorFormat = /^\d+:\s/;
+    if (errorFormat.test(marker.data.errorMessage)) {
+      const [number, detail] = marker.data.errorMessage.split(': ');
+      return `NetworkError: ${isNetworkError}<br>0x${parseInt(number).toString(16)}: ${detail} (see the <a href="https://searchfox.org/mozilla-central/source/__GENERATED__/xpcom/base/ErrorList.h" target="_blank">error list</a>)`;
+    } else {
+      return `NetworkError: ${isNetworkError}<br>${marker.data.errorMessage}`;
+    }
+  } else if (marker.name === 'mozloadresource') {
+    let details = `url: <b>${marker.data.src}</b>`;
+    if (marker.data.type !== '') details += `, type: ${marker.data.type}`;
+    if (marker.data.media !== '') details += `, media: ${marker.data.media}`;
+    return details;
   }
   return '';
 }
@@ -415,9 +613,11 @@ function updateMarkerDetails(groupId, currentTime) {
   table.appendChild(headerRow);
 
   filteredMarkers.forEach(marker => {
+    if (excludedMarkers.includes(marker.name)) return;
+
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${marker.name}</td>
+      <td>${marker.name} ${getMarkerIcon(marker.name)}</td>
       <td>${getMarkerDetails(marker)}</td>
       <td>${marker.start.toFixed(2)}</td>
     `;
@@ -425,4 +625,55 @@ function updateMarkerDetails(groupId, currentTime) {
   });
 
   markerDetailsContainer.appendChild(table);
+}
+
+function handleResize() {
+  const container = document.getElementById('timeline-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // Update SVG dimensions
+  svg.attr('width', width).attr('height', height)
+    .attr('viewBox', `0 0 ${width} ${height}`);
+
+  // Recalculate scales
+  timeScale.range([svg.margin.left, width - svg.margin.right]);
+  svg.yScale.range([height - svg.margin.bottom, svg.margin.top]);
+
+  drawGroupMarkers(getCurrentGroupMarkers());
+  updateLegendLayout();
+  updateMarkerDetailsLayout();
+}
+
+window.addEventListener('resize', handleResize);
+
+function updateLegendLayout() {
+  const legendContainer = d3.select("#resolution-legend");
+  if (window.matchMedia("(max-width: 600px)").matches) {
+    // Apply vertical layout for small screens
+    legendContainer.style("flex-direction", "column");
+    legendContainer.selectAll("div")
+      .style("margin", "5px 0");
+  } else {
+    // Apply horizontal layout for larger screens
+    legendContainer.style("flex-direction", "row");
+    legendContainer.selectAll("div")
+      .style("margin", "0 10px");
+  }
+}
+
+function updateMarkerDetailsLayout() {
+  const markerDetailsContainer = document.getElementById("marker-details");
+  const table = markerDetailsContainer.querySelector("table");
+  if (window.matchMedia("(max-width: 600px)").matches) {
+    // Make table scrollable on small screens
+    markerDetailsContainer.style.overflowX = "auto";
+    table.style.width = "100%";
+    table.style.fontSize = "12px";
+  } else {
+    // Reset styles for larger screens
+    markerDetailsContainer.style.overflowX = "visible";
+    table.style.width = "auto";
+    table.style.fontSize = "14px";
+  }
 }
